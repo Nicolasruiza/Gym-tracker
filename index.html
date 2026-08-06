@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lift Log</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#0F1518;--card:#1A2328;--card2:#222D33;--bone:#EDE8DD;--muted:#8B9BA3;
+    --pine:#43A177;--brass:#D4A94F;--red:#F08A80;--rule:#2C383E}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:var(--ink);color:var(--bone);font-family:"IBM Plex Sans",system-ui,sans-serif;padding-bottom:80px}
+  .wrap{max-width:600px;margin:0 auto;padding:0 12px}
+
+  .tabs{position:sticky;top:0;z-index:10;background:var(--ink);padding:12px 0 8px;display:flex;gap:5px}
+  .tab{flex:1;padding:11px 3px;border:none;border-radius:8px;cursor:pointer;background:var(--card);
+    color:var(--muted);font-family:"Barlow Condensed",sans-serif;font-size:17px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.05em;line-height:1.1}
+  .tab small{display:block;font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.1em;opacity:.7;margin-top:2px}
+  .tab.on{background:var(--pine);color:#08110D}
+  .tab.locked{opacity:.5}
+
+  /* session control */
+  .sess{background:var(--card);border-radius:12px;padding:15px;margin:6px 0 16px;border:1px solid var(--rule)}
+  .sess.live{border-color:var(--pine);background:linear-gradient(180deg,#1E332B,#1A2529)}
+  .sess.rest{border-color:#4A3A25}
+  .sess .st{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:0 0 9px}
+  .dot.go{background:var(--pine);box-shadow:0 0 0 4px rgba(67,161,119,.18)}
+  .dot.no{background:var(--brass)}
+  .sv{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.1em;
+    padding:4px 8px;border-radius:99px;background:var(--card2);color:var(--muted)}
+  .sv.ok{background:#1E4034;color:var(--pine)}
+  .sv.bad{background:#4A2A27;color:var(--red)}
+  .sess .st b{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.13em;text-transform:uppercase}
+  .sess p{font-size:13px;color:var(--muted);line-height:1.5;margin-bottom:12px}
+  .sess p b{color:var(--bone)}
+  .big{width:100%;padding:16px;border:none;border-radius:10px;cursor:pointer;
+    font-family:"Barlow Condensed",sans-serif;font-size:21px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;background:var(--pine);color:#08110D}
+  .big.stop{background:var(--brass);color:#1A1204}
+  .big.off{background:var(--card2);color:var(--muted);cursor:not-allowed}
+  .anyway{display:block;width:100%;margin-top:9px;background:none;border:none;color:var(--muted);
+    font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;text-decoration:underline;cursor:pointer}
+  .live-stats{display:flex;gap:16px;margin-bottom:12px}
+  .live-stats div{font-family:"IBM Plex Mono",monospace}
+  .live-stats b{display:block;font-size:21px;color:var(--pine)}
+  .live-stats small{font-size:8.5px;letter-spacing:.12em;color:var(--muted)}
+
+  .blk{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);margin:20px 0 8px;display:flex;align-items:center;gap:9px}
+  .blk i{flex:1;height:1px;background:var(--rule)}
+
+  .ex{background:var(--card);border-radius:11px;padding:13px;margin-bottom:9px;border:1px solid transparent}
+  .ex.key{border-color:#2F5748;background:linear-gradient(180deg,#20332C,#1A2529)}
+  .ex.done{border-color:var(--pine)}
+  .ex.idle{opacity:.5}
+  .top{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+  .top h3{flex:1;font-size:15.5px;font-weight:600;line-height:1.25}
+  .tgt{font-family:"IBM Plex Mono",monospace;font-size:15px;font-weight:600;color:var(--brass);white-space:nowrap}
+  .vid{flex:0 0 44px;height:44px;display:flex;align-items:center;justify-content:center;
+    border-radius:9px;background:var(--card2);text-decoration:none;border:none;cursor:pointer;padding:0}
+  .vid svg{width:17px;height:17px;fill:var(--muted);pointer-events:none}
+  .vid:active{background:#2E3B42}
+  .vid:active svg{fill:var(--brass)}
+
+  .hold{background:#4A2A27;color:var(--red);font-family:"IBM Plex Mono",monospace;font-size:10px;
+    padding:5px 9px;border-radius:99px;letter-spacing:.06em}
+  .release{background:none;border:1px solid var(--rule);color:var(--muted);border-radius:99px;
+    font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.08em;padding:5px 9px;cursor:pointer}
+  .badge{font-family:"IBM Plex Mono",monospace;font-size:8.5px;font-weight:600;letter-spacing:.09em;
+    padding:3px 7px;border-radius:99px;white-space:nowrap;margin-left:7px;vertical-align:1px}
+  .b4{background:#1E4034;color:#5FD3A0}.b3{background:#1D3548;color:#69AEE8}
+  .b2{background:#3E3320;color:#E5BB5C}.b1{background:#4A2A27;color:var(--red)}
+  .b0{background:#252F35;color:#7C8A91}
+
+  .row{display:flex;gap:6px;align-items:center}
+  .fld{flex:0 0 88px;position:relative}
+  .fld.grow{flex:1}
+  .fld label{position:absolute;top:5px;left:8px;font-family:"IBM Plex Mono",monospace;
+    font-size:8px;letter-spacing:.11em;color:var(--muted);pointer-events:none}
+  input{width:100%;height:52px;padding:14px 6px 4px;border-radius:8px;border:1px solid var(--rule);
+    background:#131B1F;color:var(--bone);font-family:"IBM Plex Mono",monospace;font-size:18px;
+    font-weight:600;text-align:center;-moz-appearance:textfield}
+  input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input:focus{outline:none;border-color:var(--pine)}
+  input:disabled{opacity:.45}
+  input.hit{border-color:var(--pine);color:var(--pine)}
+  input.miss{border-color:#7A4C48}
+
+  .log{flex:0 0 56px;height:52px;border:none;border-radius:8px;background:var(--pine);color:#08110D;
+    font-family:"Barlow Condensed",sans-serif;font-size:15px;font-weight:700;letter-spacing:.05em;
+    text-transform:uppercase;cursor:pointer}
+  .log.saved{background:#1E4034;color:var(--pine);border:1px solid var(--pine)}
+  .log.off{background:var(--card2);color:var(--muted);cursor:not-allowed}
+
+  .plates{margin-top:9px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+    color:var(--brass);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .plates .bar45{color:var(--muted)}
+  .plates .pl{background:#3E3320;color:#E5BB5C;border-radius:4px;padding:2px 6px;font-weight:600}
+  .plates .warn{color:var(--red)}
+  .ft{margin-top:9px;display:flex;flex-wrap:wrap;gap:6px}
+  .pill{font-family:"IBM Plex Mono",monospace;font-size:10.5px;padding:5px 9px;border-radius:99px;
+    background:var(--card2);color:var(--muted)}
+  .pill.up{background:#1E4034;color:var(--pine)}
+  .pill.hold{background:#3A2E22;color:var(--brass)}
+
+  /* history */
+  .hcard{background:var(--card);border-radius:11px;padding:13px;margin-bottom:9px}
+  .hrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(44,56,62,.6)}
+  .hrow:last-child{border-bottom:none}
+  .hrow .nm{flex:1;font-size:14px}
+  .track{flex:0 0 96px;height:6px;background:#131B1F;border-radius:99px;overflow:hidden}
+  .track span{display:block;height:100%;background:var(--pine)}
+  .delta{font-family:"IBM Plex Mono",monospace;font-size:13px;white-space:nowrap}
+  .delta b{color:var(--pine)}
+  .sesrow{display:flex;gap:10px;align-items:baseline;padding:9px 0;border-bottom:1px solid rgba(44,56,62,.6);
+    font-family:"IBM Plex Mono",monospace;font-size:12.5px}
+  .sesrow .d{color:var(--muted);flex:0 0 52px}
+  .sesrow .t{flex:1;font-family:"IBM Plex Sans",sans-serif;font-size:13.5px}
+  .sesrow .v{color:var(--brass)}
+  h2s{}
+  .h2{font-family:"Barlow Condensed",sans-serif;font-size:22px;text-transform:uppercase;
+    letter-spacing:.05em;margin:22px 0 10px;color:var(--bone)}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:26px 10px;line-height:1.6}
+
+  .bar2{display:flex;gap:8px;margin-top:24px}
+  .bar2 button{flex:1;padding:12px;border:1px solid var(--rule);background:transparent;color:var(--muted);
+    border-radius:9px;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;cursor:pointer}
+  .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(90px);
+    background:var(--pine);color:#08110D;padding:12px 18px;border-radius:99px;font-weight:600;
+    font-size:13.5px;transition:transform .25s ease;z-index:50;max-width:92vw;text-align:center}
+  .toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab on" data-d="1">Day 1<small>UPPER A</small></button>
+    <button class="tab" data-d="2">Day 2<small>LEGS</small></button>
+    <button class="tab" data-d="3">Day 3<small>UPPER B</small></button>
+    <button class="tab" data-d="h">History<small>PROGRESS</small></button>
+  </div>
+  <div id="sess"></div>
+  <div id="list"></div>
+  <div class="bar2">
+    <button id="export">EXPORT</button>
+    <button id="import">IMPORT</button>
+    <button id="wipe">RESET</button>
+  </div>
+  <input type="file" id="file" accept="application/json,.json" style="display:none">
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= PLAN ================= */
+const PLAN={
+ 1:{name:"Upper A",blocks:[
+  {t:"Basics · free weight",items:[
+   {id:"bb_press",n:"Barbell press",r:6,w:135,inc:5,key:1,bar:45},
+   {id:"lat_pull",n:"Lat pulldown",r:8,w:75,inc:5,key:1,mult:2}]},
+  {t:"Compound",items:[
+   {id:"db_ohp",n:"Dumbbell shoulder press",r:8,w:35,inc:5,each:1},
+   {id:"db_row",n:"Dumbbell row",r:8,w:50,inc:5}]},
+  {t:"Isolation",items:[
+   {id:"m_fly",n:"Machine fly",r:12,w:145,inc:5},
+   {id:"cbl_tri",n:"Cable triceps extension",r:12,w:60,inc:5},
+   {id:"db_curl",n:"Dumbbell bicep curl",r:12,w:30,inc:5,each:1},
+   {id:"face_pull",n:"Face pull",r:15,w:30,inc:5}]},
+  {t:"Core",items:[{id:"leg_raise",n:"Hanging leg raise",r:10,w:0,inc:0,bw:1}]}]},
+ 2:{name:"Legs",blocks:[
+  {t:"Basics · free weight",items:[
+   {id:"squat",n:"Back squat",r:5,w:95,inc:10,key:1,bar:45},
+   {id:"rdl",n:"Romanian deadlift",r:6,w:95,inc:10,key:1,bar:45}]},
+  {t:"Compound",items:[{id:"leg_press",n:"Leg press",r:10,w:180,inc:10,plates:1}]},
+  {t:"Isolation",items:[
+   {id:"ham_curl",n:"Lying hamstring curl",r:12,w:80,inc:10},
+   {id:"leg_ext",n:"Leg extension",r:12,w:100,inc:10},
+   {id:"calf",n:"Calf raise",r:15,w:90,inc:10}]},
+  {t:"Core",items:[{id:"plank",n:"Plank (seconds)",r:45,w:0,inc:0,bw:1}]}]},
+ 3:{name:"Upper B",blocks:[
+  {t:"Basics",items:[
+   {id:"db_incl",n:"Dumbbell incline bench press",r:8,w:45,inc:5,each:1,key:1},
+   {id:"pullup",n:"Pull-ups",r:8,w:0,inc:5,bw:1,key:1}]},
+  {t:"Compound",items:[
+   {id:"cbl_row",n:"Cable row",r:10,w:70,inc:5},
+   {id:"bb_curl",n:"Barbell curl",r:8,w:70,inc:5,bar:45}]},
+  {t:"Isolation",items:[
+   {id:"lat_raise",n:"Lateral raise",r:15,w:15,inc:5,each:1},
+   {id:"skull",n:"Skull crusher",r:12,w:40,inc:5,bar:25},
+   {id:"hammer",n:"Hammer curls",r:12,w:25,inc:5,each:1},
+   {id:"cbl_crunch",n:"Cable crunch",r:15,w:50,inc:5}]}]}
+};
+const BW=194;
+const STD={bb_press:.90*BW,lat_pull:.75*BW,db_ohp:.25*BW,db_row:.30*BW,db_curl:.18*BW,
+  squat:1.25*BW,rdl:1.25*BW,leg_press:2*BW,db_incl:.33*BW,bb_curl:.38*BW};
+const QMAP={bb_press:"barbell bench press proper form",lat_pull:"lat pulldown proper form",
+ db_ohp:"seated dumbbell shoulder press form",db_row:"one arm dumbbell row proper form",
+ m_fly:"pec deck machine fly form",cbl_tri:"cable triceps pushdown form",
+ db_curl:"dumbbell bicep curl proper form",face_pull:"cable face pull proper form",
+ leg_raise:"hanging leg raise proper form",squat:"back squat proper form beginner",
+ rdl:"romanian deadlift proper form",leg_press:"leg press proper form",
+ ham_curl:"lying leg curl machine form",leg_ext:"leg extension machine form",
+ calf:"standing calf raise form",plank:"plank proper form common mistakes",
+ db_incl:"incline dumbbell bench press form",pullup:"assisted pull up proper form",
+ cbl_row:"seated cable row proper form",bb_curl:"barbell curl proper form",
+ lat_raise:"dumbbell lateral raise proper form",skull:"skull crusher ez bar proper form",
+ hammer:"hammer curl proper form",cbl_crunch:"kneeling cable crunch proper form"};
+
+/* ================= STATE ================= */
+const KEY="liftlog:v2";
+let DB={next:{},history:[],active:null,holds:{squat:1,rdl:1}};   // holds = injury freeze, no progression
+let view=1, hydrated=false, dirty=false, storageOK=null;
+
+const store={
+ async get(){if(window.storage){try{const r=await window.storage.get(KEY);return r?r.value:null}catch(e){}}
+   try{return localStorage.getItem(KEY)}catch(e){return null}},
+ async set(v){if(window.storage){try{await window.storage.set(KEY,v);return}catch(e){}}
+   try{localStorage.setItem(KEY,v)}catch(e){}}
+};
+async function save(){
+  dirty=true;
+  const payload=JSON.stringify(DB);
+  try{
+    await store.set(payload);
+    const back=await store.get();
+    storageOK = back===payload;
+  }catch(e){ storageOK=false; }
+  const chip=document.getElementById('sv');
+  if(chip)chip.outerHTML=svChip();
+}
+const svChip=()=>storageOK===false
+  ? `<span class="sv bad" id="sv">NOT SAVING \u2014 open the file locally</span>`
+  : (storageOK===true?`<span class="sv ok" id="sv">SAVED</span>`:`<span class="sv" id="sv">\u2026</span>`);
+const today=()=>new Date().toISOString().slice(0,10);
+const dayDiff=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+const items=d=>PLAN[d].blocks.flatMap(b=>b.items);
+const ALL=[1,2,3].flatMap(d=>items(d));
+const wOf=ex=>DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;
+const lastOf=id=>{for(let i=DB.history.length-1;i>=0;i--){const e=DB.history[i].entries[id];
+  if(e)return{...e,date:DB.history[i].date}}return null};
+const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
+  clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2800)};
+
+const eff=(ex,w)=>(w==null?wOf(ex):w)*(ex.mult||1);
+function badge(ex,raw){
+  const s=STD[ex.id];
+  if(!s)return `<span class="badge b0" title="No cross-gym standard — just progress it">TRACK</span>`;
+  const e=eff(ex,raw), p=e/s, tip=`${e} lb effective of ~${Math.round(s)} lb target`;
+  if(p>=.90)return `<span class="badge b4" title="${tip}">OPTIMAL</span>`;
+  if(p>=.70)return `<span class="badge b3" title="${tip}">CLOSE</span>`;
+  if(p>=.45)return `<span class="badge b2" title="${tip}">BUILDING</span>`;
+  return `<span class="badge b1" title="${tip}">NEEDS BOOST</span>`;
+}
+const PLATES=[45,35,25,10,5,2.5];
+function plateLine(ex,total){
+  if(!ex.bar)return'';
+  const bt=ex.bar===45?'45 lb bar':ex.bar+' lb EZ bar';
+  if(total<ex.bar)return `<span class="warn">below the bar (${bt})</span>`;
+  if(total===ex.bar)return `<span class="bar45">${bt} only</span>`;
+  let side=(total-ex.bar)/2,out=[];
+  PLATES.forEach(p=>{while(side>=p-.001){out.push(p);side=+(side-p).toFixed(2)}});
+  return `<span class="bar45">${bt} +</span> ${out.map(p=>`<span class="pl">${p}</span>`).join(' ')}`
+    +` <span class="bar45">per side</span>`+(side>.001?` <span class="warn">+${side} short</span>`:'');
+}
+const ytURL=ex=>`https://www.youtube.com/results?search_query=${encodeURIComponent(QMAP[ex.id]||ex.n+' proper form')}`;
+const vid=ex=>`<button class="vid" data-yt="${ex.id}" title="Form video" aria-label="Form video"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>`;
+function openVid(ex){
+  const u=ytURL(ex); let w=null;
+  try{w=window.open(u,'_blank','noopener')}catch(e){}
+  if(w)return;
+  try{navigator.clipboard.writeText(u);toast('Preview blocks new tabs \u2014 link copied')}
+  catch(e){toast('Open the file locally to use video links')}
+}
+
+/* ================= REST-DAY GATE ================= */
+function gate(){
+  const last=DB.history[DB.history.length-1];
+  if(!last)return{ok:1,msg:"First session. Nothing logged yet."};
+  const gap=dayDiff(last.date,today());
+  if(gap===0)return{ok:0,hard:1,msg:`You already trained <b>${PLAN[last.day].name}</b> today. Two sessions in one day is not more progress, it is less recovery.`};
+  if(gap===1)return{ok:0,hard:0,msg:`You trained <b>${PLAN[last.day].name}</b> yesterday. At 3 days a week the plan wants a rest day in between.`};
+  return{ok:1,msg:`Last session: <b>${PLAN[last.day].name}</b>, ${gap} days ago.`};
+}
+function nextDay(){
+  const last=DB.history[DB.history.length-1];
+  return last?(last.day%3)+1:1;
+}
+
+/* ================= RENDER ================= */
+function render(){
+  const S=document.getElementById('sess'), L=document.getElementById('list');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.d==String(view)));
+  if(view==='h'){S.innerHTML='';L.innerHTML=history();return}
+  S.innerHTML=sessBox();wire();
+  L.innerHTML='';
+  PLAN[view].blocks.forEach(b=>{
+    const h=document.createElement('div');h.className='blk';
+    h.innerHTML=`<span>${b.t}</span><i></i>`;L.appendChild(h);
+    b.items.forEach(ex=>L.appendChild(card(ex)));
+  });
+}
+
+function sessBox(){
+  const A=DB.active;
+  if(A&&A.day===view){
+    const n=Object.keys(A.entries).length, tot=items(view).length;
+    let vol=0;Object.entries(A.entries).forEach(([id,e])=>{const m=(ALL.find(x=>x.id===id)||{}).mult||1;
+      e.reps.forEach(r=>vol+=r*(e.w||0)*m)});
+    return `<div class="sess live">
+      <div class="st"><span class="dot go"></span><b>Session in progress · ${PLAN[view].name}</b>${svChip()}</div>
+      <div class="live-stats">
+        <div><b>${n}/${tot}</b><small>EXERCISES</small></div>
+        <div><b>${vol.toLocaleString()}</b><small>LB VOLUME</small></div>
+      </div>
+      <button class="big stop" id="end">END SESSION</button>
+      <button class="anyway" id="scrap">DISCARD THIS SESSION</button></div>`;
+  }
+  if(A&&A.day!==view)
+    return `<div class="sess"><div class="st"><span class="dot no"></span><b>Session open on ${PLAN[A.day].name}</b></div>
+      <p>Finish or discard that one before starting another day.</p></div>`;
+  const g=gate(), sug=nextDay();
+  const last=DB.history[DB.history.length-1];
+  const canReopen=last&&last.date===today();
+  const cls=g.ok?'':'rest';
+  return `<div class="sess ${cls}">
+    <div class="st"><span class="dot ${g.ok?'go':'no'}"></span><b>${g.ok?'Ready':'Rest day'}</b></div>
+    <p>${g.msg}${g.ok&&sug!==view?` Up next in the rotation: <b>${PLAN[sug].name}</b>.`:''}</p>
+    ${canReopen?`<button class="big" id="reopen">REOPEN ${PLAN[last.day].name}</button>
+       <p style="margin:10px 0 0;font-size:12px">Closed by mistake? This puts today's ${PLAN[last.day].name} back in progress with everything you logged, and undoes the weight changes until you close it again.</p>`
+      :`<button class="big ${g.ok?'':'off'}" id="start">START ${PLAN[view].name}</button>
+        ${(!g.ok&&!g.hard)?`<button class="anyway" id="force">TRAIN ANYWAY</button>`:''}`}</div>`;
+}
+
+function card(ex){
+  const A=DB.active, live=A&&A.day===view;
+  const entry=live?A.entries[ex.id]:null;
+  const el=document.createElement('div');
+  el.className='ex'+(ex.key?' key':'')+(entry?' done':'')+(live?'':' idle');
+  const w=entry?entry.w:wOf(ex);
+  el.innerHTML=`
+   <div class="top"><h3>${ex.n}${badge(ex)}</h3><div class="tgt">3 × ${ex.r}</div>${vid(ex)}</div>
+   <div class="row">
+     <div class="fld"><label>${ex.bw?'ADDED LB':(ex.mult?'LB PINNED':(ex.plates?'LB PLATES':'LB'+(ex.each?' EACH':'')))}</label>
+       <input type="number" inputmode="decimal" id="w_${ex.id}" value="${w||''}" ${live?'':'disabled'}></div>
+     ${[0,1,2].map(i=>`<div class="fld grow"><label>SET ${i+1}</label>
+       <input type="number" inputmode="numeric" data-s="${ex.id}" data-i="${i}"
+         value="${entry&&entry.reps[i]!=null?entry.reps[i]:''}" ${live?'':'disabled'}></div>`).join('')}
+     <button class="log ${live?(entry?'saved':''):'off'}" data-log="${ex.id}">${entry?'✓':'LOG'}</button>
+   </div>
+   ${ex.bar?`<div class="plates" id="pl_${ex.id}">${plateLine(ex,w)}</div>`:''}
+   ${ex.mult?`<div class="plates" id="mu_${ex.id}"><span class="bar45">dual cable ·</span> <span class="pl">${w*ex.mult} lb</span> <span class="bar45">actually moving</span></div>`:''}
+   <div class="ft">${foot(ex)}</div>`;
+
+  const wIn=el.querySelector('#w_'+ex.id);
+  wIn.addEventListener('input',()=>{
+    const box=el.querySelector('#pl_'+ex.id);
+    if(box)box.innerHTML=plateLine(ex,+(wIn.value||0));
+    const mu=el.querySelector('#mu_'+ex.id);
+    if(mu)mu.innerHTML=`<span class="bar45">dual cable ·</span> <span class="pl">${(+(wIn.value||0))*ex.mult} lb</span> <span class="bar45">actually moving</span>`;
+    el.querySelector('.top h3').innerHTML=ex.n+badgeLive(ex,+(wIn.value||0));
+  });
+  el.querySelectorAll('[data-s]').forEach(inp=>{
+    const t=ex.r;
+    const mk=()=>{inp.classList.remove('hit','miss');
+      if(inp.value!=='')inp.classList.add(+inp.value>=t?'hit':'miss')};
+    mk();inp.addEventListener('input',mk);
+  });
+  el.querySelector('[data-yt]').addEventListener('click',e=>{e.preventDefault();openVid(ex)});
+  const rel=el.querySelector('[data-rel]');
+  if(rel)rel.addEventListener('click',()=>{
+    if(!confirm(`Release the injury hold on ${ex.n}? Progression starts again next time you close a session.`))return;
+    delete DB.holds[ex.id];save();render();toast(`${ex.n} back on progression`);
+  });
+  el.querySelector('[data-log]').addEventListener('click',()=>logEx(ex));
+  return el;
+}
+function badgeLive(ex,w){const s=STD[ex.id];if(!s)return badge(ex);
+  const p=eff(ex,w)/s;if(p>=.90)return `<span class="badge b4">OPTIMAL</span>`;
+  if(p>=.70)return `<span class="badge b3">CLOSE</span>`;
+  if(p>=.45)return `<span class="badge b2">BUILDING</span>`;
+  return `<span class="badge b1">NEEDS BOOST</span>`}
+
+function foot(ex){
+  const held=DB.holds&&DB.holds[ex.id];
+  const holdUI=held?`<span class="hold">HOLD \u00b7 injury, weight frozen</span>
+    <button class="release" data-rel="${ex.id}">RELEASE</button>`:'';
+  const l=lastOf(ex.id);if(!l)return holdUI+`<span class="pill">no history yet</span>`;
+  const hit=l.reps.length===3&&l.reps.every(r=>r>=ex.r);
+  return holdUI+`<span class="pill">last ${l.date.slice(5)} · ${l.w||'BW'} × ${l.reps.join('/')}</span>`
+   +(held?'':(hit?`<span class="pill up">↑ now ${wOf(ex)} lb</span>`
+        :`<span class="pill hold">hold ${wOf(ex)} until 3 × ${ex.r}</span>`));
+}
+
+/* ================= ACTIONS ================= */
+function wire(){
+  const s=document.getElementById('start');
+  if(s)s.addEventListener('click',()=>{if(gate().ok)begin();else toast('Rest day — see the note above')});
+  const f=document.getElementById('force');
+  if(f)f.addEventListener('click',()=>{if(confirm('The plan says rest today. Start anyway?'))begin()});
+  const e=document.getElementById('end');
+  if(e)e.addEventListener('click',endSession);
+  const ro=document.getElementById('reopen');
+  if(ro)ro.addEventListener('click',reopen);
+  const d=document.getElementById('scrap');
+  if(d)d.addEventListener('click',()=>{if(confirm('Discard this session? Nothing will be saved.'))
+    {DB.active=null;save();render()}});
+}
+function begin(){
+  DB.active={day:view,date:today(),started:Date.now(),entries:{}};
+  save();render();toast(`${PLAN[view].name} started`);
+}
+function logEx(ex){
+  if(!(DB.active&&DB.active.day===view)){toast('Start the session first');return}
+  const reps=[0,1,2].map(i=>document.querySelector(`[data-s="${ex.id}"][data-i="${i}"]`).value)
+    .map(v=>v===''?null:+v);
+  if(reps.some(r=>r==null)){toast('Fill all 3 sets');return}
+  const w=+(document.getElementById('w_'+ex.id).value||0);
+  DB.active.entries[ex.id]={w,reps};      // overwrite, never compounds
+  save();render();
+  toast(`${ex.n} saved — tap LOG again to correct it`);
+}
+function reopen(){
+  const last=DB.history[DB.history.length-1];
+  if(!last||last.date!==today()){toast('Nothing to reopen');return}
+  DB.history.pop();
+  // roll the progression back to what was actually lifted
+  Object.entries(last.entries).forEach(([id,e])=>{DB.next[id]=e.w});
+  DB.active={day:last.day,date:last.date,started:Date.now(),entries:last.entries};
+  view=last.day;save();render();window.scrollTo({top:0});
+  toast(`${PLAN[last.day].name} reopened \u2014 finish and close it again`);
+}
+
+function endSession(){
+  const A=DB.active, ids=Object.keys(A.entries);
+  if(!ids.length){toast('Nothing logged yet');return}
+  let ups=[];
+  ids.forEach(id=>{
+    const ex=ALL.find(x=>x.id===id), e=A.entries[id];
+    const hit=e.reps.every(r=>r>=ex.r);
+    const held=DB.holds&&DB.holds[id];
+    DB.next[id]=(hit&&ex.inc&&!held)?e.w+ex.inc:e.w;   // applied ONCE, here
+    if(hit&&ex.inc&&!held)ups.push(ex.n);
+  });
+  let vol=0;ids.forEach(id=>A.entries[id].reps.forEach(r=>vol+=r*(A.entries[id].w||0)));
+  DB.history.push({date:A.date,day:A.day,vol,entries:A.entries});
+  DB.active=null;save();render();
+  toast(ups.length?`Session closed · ${ups.length} lift${ups.length>1?'s':''} moved up`:'Session closed');
+}
+
+/* ================= HISTORY ================= */
+function history(){
+  if(!DB.history.length)return `<div class="empty">No sessions yet.<br>
+    Start a day, log your sets, and end the session — the progression shows up here.</div>`;
+  const rows=ALL.map(ex=>{
+    const hits=DB.history.filter(s=>s.entries[ex.id]);
+    if(!hits.length)return null;
+    const first=hits[0].entries[ex.id].w, now=wOf(ex), std=STD[ex.id];
+    const pct=std?Math.min(100,Math.round(now/std*100)):null;
+    return `<div class="hrow">
+      <span class="nm">${ex.n}</span>
+      ${pct!=null?`<span class="track"><span style="width:${pct}%"></span></span>`:'<span class="track"></span>'}
+      <span class="delta">${first} → <b>${now}</b>${now>first?` +${now-first}`:''}</span></div>`;
+  }).filter(Boolean).join('');
+  const ses=[...DB.history].reverse().map(s=>`<div class="sesrow">
+      <span class="d">${s.date.slice(5)}</span>
+      <span class="t">${PLAN[s.day].name} · ${Object.keys(s.entries).length} exercises</span>
+      <span class="v">${s.vol.toLocaleString()} lb</span></div>`).join('');
+  return `<div class="h2">Weight progression</div><div class="hcard">${rows}</div>
+    <div class="h2">Sessions · ${DB.history.length}</div><div class="hcard">${ses}</div>`;
+}
+
+/* ================= CONTROLS ================= */
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  view=t.dataset.d==='h'?'h':+t.dataset.d;render();window.scrollTo({top:0});
+}));
+document.getElementById('export').addEventListener('click',()=>{
+  const b=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='liftlog-'+today()+'.json';a.click();
+});
+document.getElementById('import').addEventListener('click',()=>document.getElementById('file').click());
+document.getElementById('file').addEventListener('change',ev=>{
+  const f=ev.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const p=JSON.parse(rd.result);
+      if(!p||typeof p!=='object')throw 0;
+      DB.next=p.next||{};DB.history=p.history||[];DB.active=p.active||null;DB.holds=p.holds||{};
+      save();render();toast(`Imported ${DB.history.length} session${DB.history.length===1?'':'s'}`);
+    }catch(e){toast('That file is not a valid export')}
+  };
+  rd.readAsText(f);ev.target.value='';
+});
+document.getElementById('wipe').addEventListener('click',()=>{
+  if(!confirm('Erase all history, progression and the open session?'))return;
+  DB={next:{},history:[],active:null};save();render();toast('Cleared');
+});
+
+/* ================= BOOT ================= */
+render();
+(async()=>{
+  let raw=null;try{raw=await store.get()}catch(e){}
+  if(dirty){hydrated=true;return}          // user already worked: never clobber
+  if(raw)try{
+    const p=JSON.parse(raw);
+    DB.next=p.next||{};DB.history=p.history||[];DB.active=p.active||null;
+    if(p.holds)DB.holds=p.holds;
+    if(DB.active&&DB.active.date!==today())DB.active=null;   // stale session
+  }catch(e){}
+  hydrated=true;render();
+})();
+</script>
+</body>
+</html>
