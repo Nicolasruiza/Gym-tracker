@@ -21,6 +21,17 @@
   .tab small{display:block;font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.1em;opacity:.7;margin-top:2px}
   .tab.on{background:var(--pine);color:#08110D}
   .tab.locked{opacity:.5}
+  .mini{background:var(--card);color:var(--txt);border:1px solid #3c4744;border-radius:6px;
+        font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.08em;padding:6px 9px;cursor:pointer}
+  .mini.del{border-color:#7a3b3b;color:#e0a0a0}
+  .sesedit{padding:10px 0;border-bottom:1px solid #2a3330}
+  .erow{display:grid;grid-template-columns:1fr 56px 44px 44px 44px;gap:5px;align-items:center;margin-bottom:6px}
+  .erow.head{font-family:"IBM Plex Mono",monospace;font-size:9px;opacity:.6;letter-spacing:.1em}
+  .erow .en{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ei{background:#101a17;border:1px solid #3c4744;border-radius:6px;color:var(--txt);
+      padding:7px 4px;font-size:13px;text-align:center;width:100%;min-height:34px}
+  .ei.date{grid-column:2/6;text-align:left;padding-left:8px}
+  .ebtns{display:flex;gap:8px;margin-top:8px}
   .diag{margin-top:18px;padding:12px;border:1px dashed #4a5550;border-radius:8px;
         font-family:"IBM Plex Mono",monospace;font-size:10.5px;line-height:1.7;opacity:.75}
   .tab.done{opacity:.45}
@@ -217,6 +228,7 @@ const QMAP={bb_press:"barbell bench press proper form",lat_pull:"lat pulldown pr
 /* ================= STATE ================= */
 const KEY="liftlog:v2";
 let DB={next:{},history:[],active:null,holds:{rdl:1}};   // holds = injury freeze, no progression
+let editIdx=null;
 let view=1, hydrated=false, dirty=false, storageOK=null;
 
 const store={
@@ -239,7 +251,8 @@ async function save(){
 const svChip=()=>storageOK===false
   ? `<span class="sv bad" id="sv">NOT SAVING \u2014 open the file locally</span>`
   : (storageOK===true?`<span class="sv ok" id="sv">SAVED</span>`:`<span class="sv" id="sv">\u2026</span>`);
-const today=()=>new Date().toISOString().slice(0,10);
+const today=()=>{const d=new Date();
+  return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
 const dayDiff=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
 const items=d=>PLAN[d].blocks.flatMap(b=>b.items);
 const ALL=[1,2,3].flatMap(d=>items(d));
@@ -500,13 +513,60 @@ function history(){
       ${pct!=null?`<span class="track"><span style="width:${pct}%"></span></span>`:'<span class="track"></span>'}
       <span class="delta">${first} → <b>${now}</b>${now>first?` +${now-first}`:''}</span></div>`;
   }).filter(Boolean).join('');
-  const ses=[...DB.history].reverse().map(s=>`<div class="sesrow">
+  const ses=[...DB.history].map((s,i)=>({s,i})).reverse().map(({s,i})=>{
+    if(editIdx===i){
+      const fields=Object.keys(s.entries).map(id=>{
+        const ex=ALL.find(e=>e.id===id)||{n:id}, en=s.entries[id];
+        return `<div class="erow"><span class="en">${ex.n}</span>
+          <input class="ei w" data-i="${i}" data-id="${id}" data-f="w" type="number" inputmode="numeric" value="${en.w}">
+          ${[0,1,2].map(k=>`<input class="ei r" data-i="${i}" data-id="${id}" data-f="${k}" type="number" inputmode="numeric" value="${en.reps[k]!=null?en.reps[k]:''}">`).join('')}
+        </div>`;}).join('');
+      return `<div class="sesedit">
+        <div class="erow head"><span class="en">${PLAN[s.day].name}</span><span>LB</span><span>S1</span><span>S2</span><span>S3</span></div>
+        ${fields}
+        <div class="erow"><span class="en">Date</span>
+          <input class="ei date" data-i="${i}" data-f="date" type="date" value="${s.date}"></div>
+        <div class="ebtns"><button class="mini" data-edone="1">DONE</button>
+          <button class="mini del" data-edel="${i}">DELETE SESSION</button></div></div>`;
+    }
+    return `<div class="sesrow">
       <span class="d">${s.date.slice(5)}</span>
       <span class="t">${PLAN[s.day].name} · ${Object.keys(s.entries).length} exercises</span>
-      <span class="v">${s.vol.toLocaleString()} lb</span></div>`).join('');
+      <span class="v">${s.vol.toLocaleString()} lb</span>
+      <button class="mini" data-edit="${i}">EDIT</button></div>`;}).join('');
   return `<div class="h2">Weight progression</div><div class="hcard">${rows}</div>
     <div class="h2">Sessions · ${DB.history.length}</div><div class="hcard">${ses}</div>`+diag();
 }
+
+/* ---- past-session editing (event delegation on the list) ---- */
+function recalcVol(sess){
+  let v=0; Object.keys(sess.entries).forEach(id=>{
+    const en=sess.entries[id], ex=ALL.find(e=>e.id===id);
+    const mult=(ex&&ex.mult)||1, each=(ex&&ex.each)?2:1;
+    en.reps.forEach(r=>{ if(r) v += (en.w*mult*each)*r; });
+  });
+  sess.vol=Math.round(v);
+}
+document.getElementById('list').addEventListener('click',ev=>{
+  const e=ev.target.closest('button'); if(!e)return;
+  if(e.dataset.edit!=null){ editIdx=+e.dataset.edit; render(); return; }
+  if(e.dataset.edone!=null){ editIdx=null; save(); render(); return; }
+  if(e.dataset.edel!=null){
+    if(!confirm('Delete this session permanently?'))return;
+    DB.history.splice(+e.dataset.edel,1); editIdx=null; save(); render();
+    toast('Session deleted'); return;
+  }
+});
+document.getElementById('list').addEventListener('change',ev=>{
+  const t=ev.target; if(!t.classList||!t.classList.contains('ei'))return;
+  const sess=DB.history[+t.dataset.i]; if(!sess)return;
+  if(t.dataset.f==='date'){ if(t.value)sess.date=t.value; }
+  else if(t.dataset.f==='w'){ sess.entries[t.dataset.id].w=+t.value||0; }
+  else { const r=t.value===''?null:+t.value; sess.entries[t.dataset.id].reps[+t.dataset.f]=r; }
+  recalcVol(sess);
+  DB.history.sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:0);
+  save();
+});
 
 /* ================= CONTROLS ================= */
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
