@@ -21,6 +21,9 @@
   .tab small{display:block;font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.1em;opacity:.7;margin-top:2px}
   .tab.on{background:var(--pine);color:#08110D}
   .tab.locked{opacity:.5}
+  .tab.done{opacity:.45}
+  .tab.done small::after{content:" \2713";opacity:1}
+  .tab.next:not(.on){box-shadow:inset 0 0 0 1.5px var(--pine)}
 
   /* session control */
   .sess{background:var(--card);border-radius:12px;padding:15px;margin:6px 0 16px;border:1px solid var(--rule)}
@@ -158,6 +161,7 @@
 /* ================= PLAN ================= */
 const PLAN={
  1:{name:"Upper A",blocks:[
+  {t:"Core · do first",items:[{id:"leg_raise",n:"Hanging leg raise",r:10,w:0,inc:0,bw:1}]},
   {t:"Basics · free weight",items:[
    {id:"bb_press",n:"Barbell press",r:6,w:135,inc:5,key:1,bar:45},
    {id:"lat_pull",n:"Lat pulldown",r:8,w:75,inc:5,key:1,mult:2}]},
@@ -168,19 +172,19 @@ const PLAN={
    {id:"m_fly",n:"Machine fly",r:12,w:145,inc:5},
    {id:"cbl_tri",n:"Cable triceps extension",r:12,w:60,inc:5},
    {id:"db_curl",n:"Dumbbell bicep curl",r:12,w:30,inc:5,each:1},
-   {id:"face_pull",n:"Face pull",r:15,w:30,inc:5}]},
-  {t:"Core",items:[{id:"leg_raise",n:"Hanging leg raise",r:10,w:0,inc:0,bw:1}]}]},
+   {id:"face_pull",n:"Face pull",r:15,w:30,inc:5}]}]},
  2:{name:"Legs",blocks:[
+  {t:"Core · do first",items:[{id:"plank",n:"Plank (seconds)",r:45,w:0,inc:0,bw:1}]},
   {t:"Basics · free weight",items:[
-   {id:"squat",n:"Back squat",r:5,w:95,inc:10,key:1,bar:45},
+   {id:"gob_squat",n:"Goblet squat",r:8,w:50,inc:5,key:1},
    {id:"rdl",n:"Romanian deadlift",r:6,w:95,inc:10,key:1,bar:45}]},
   {t:"Compound",items:[{id:"leg_press",n:"Leg press",r:10,w:180,inc:10,plates:1}]},
   {t:"Isolation",items:[
    {id:"ham_curl",n:"Lying hamstring curl",r:12,w:80,inc:10},
    {id:"leg_ext",n:"Leg extension",r:12,w:100,inc:10},
-   {id:"calf",n:"Calf raise",r:15,w:90,inc:10}]},
-  {t:"Core",items:[{id:"plank",n:"Plank (seconds)",r:45,w:0,inc:0,bw:1}]}]},
+   {id:"calf",n:"Calf raise",r:15,w:90,inc:10}]}]},
  3:{name:"Upper B",blocks:[
+  {t:"Core · do first",items:[{id:"cbl_crunch",n:"Cable crunch",r:15,w:50,inc:5}]},
   {t:"Basics",items:[
    {id:"db_incl",n:"Dumbbell incline bench press",r:8,w:45,inc:5,each:1,key:1},
    {id:"pullup",n:"Pull-ups",r:8,w:0,inc:5,bw:1,key:1}]},
@@ -190,17 +194,16 @@ const PLAN={
   {t:"Isolation",items:[
    {id:"lat_raise",n:"Lateral raise",r:15,w:15,inc:5,each:1},
    {id:"skull",n:"Skull crusher",r:12,w:40,inc:5,bar:25},
-   {id:"hammer",n:"Hammer curls",r:12,w:25,inc:5,each:1},
-   {id:"cbl_crunch",n:"Cable crunch",r:15,w:50,inc:5}]}]}
+   {id:"hammer",n:"Hammer curls",r:12,w:25,inc:5,each:1}]}]}
 };
 const BW=194;
 const STD={bb_press:.90*BW,lat_pull:.75*BW,db_ohp:.25*BW,db_row:.30*BW,db_curl:.18*BW,
-  squat:1.25*BW,rdl:1.25*BW,leg_press:2*BW,db_incl:.33*BW,bb_curl:.38*BW};
+  rdl:1.25*BW,leg_press:2*BW,db_incl:.33*BW,bb_curl:.38*BW};
 const QMAP={bb_press:"barbell bench press proper form",lat_pull:"lat pulldown proper form",
  db_ohp:"seated dumbbell shoulder press form",db_row:"one arm dumbbell row proper form",
  m_fly:"pec deck machine fly form",cbl_tri:"cable triceps pushdown form",
  db_curl:"dumbbell bicep curl proper form",face_pull:"cable face pull proper form",
- leg_raise:"hanging leg raise proper form",squat:"back squat proper form beginner",
+ leg_raise:"hanging leg raise proper form",gob_squat:"goblet squat proper form",
  rdl:"romanian deadlift proper form",leg_press:"leg press proper form",
  ham_curl:"lying leg curl machine form",leg_ext:"leg extension machine form",
  calf:"standing calf raise form",plank:"plank proper form common mistakes",
@@ -211,7 +214,7 @@ const QMAP={bb_press:"barbell bench press proper form",lat_pull:"lat pulldown pr
 
 /* ================= STATE ================= */
 const KEY="liftlog:v2";
-let DB={next:{},history:[],active:null,holds:{squat:1,rdl:1}};   // holds = injury freeze, no progression
+let DB={next:{},history:[],active:null,holds:{rdl:1}};   // holds = injury freeze, no progression
 let view=1, hydrated=false, dirty=false, storageOK=null;
 
 const store={
@@ -288,11 +291,23 @@ function nextDay(){
   const last=DB.history[DB.history.length-1];
   return last?(last.day%3)+1:1;
 }
+/* Days completed in the CURRENT cycle. Resets once all 3 are done. */
+function cycleDone(){
+  let set=new Set();
+  DB.history.forEach(h=>{ set.add(h.day); if(set.size===3) set=new Set(); });
+  return set;
+}
 
 /* ================= RENDER ================= */
 function render(){
   const S=document.getElementById('sess'), L=document.getElementById('list');
-  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.d==String(view)));
+  const done=cycleDone(), sugD=nextDay();
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.classList.toggle('on',t.dataset.d==String(view));
+    const d=+t.dataset.d;
+    t.classList.toggle('done', t.dataset.d!=='h' && done.has(d));
+    t.classList.toggle('next', t.dataset.d!=='h' && !done.has(d) && d===sugD);
+  });
   if(view==='h'){S.innerHTML='';L.innerHTML=history();return}
   S.innerHTML=sessBox();wire();
   L.innerHTML='';
