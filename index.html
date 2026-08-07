@@ -21,6 +21,8 @@
   .tab small{display:block;font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.1em;opacity:.7;margin-top:2px}
   .tab.on{background:var(--pine);color:#08110D}
   .tab.locked{opacity:.5}
+  .diag{margin-top:18px;padding:12px;border:1px dashed #4a5550;border-radius:8px;
+        font-family:"IBM Plex Mono",monospace;font-size:10.5px;line-height:1.7;opacity:.75}
   .tab.done{opacity:.45}
   .tab.done small::after{content:" \2713";opacity:1}
   .tab.next:not(.on){box-shadow:inset 0 0 0 1.5px var(--pine)}
@@ -283,7 +285,7 @@ function gate(){
   const last=DB.history[DB.history.length-1];
   if(!last)return{ok:1,msg:"First session. Nothing logged yet."};
   const gap=dayDiff(last.date,today());
-  if(gap===0)return{ok:0,hard:1,msg:`You already trained <b>${PLAN[last.day].name}</b> today. Two sessions in one day is not more progress, it is less recovery.`};
+  if(gap===0)return{ok:0,hard:0,msg:`You already trained <b>${PLAN[last.day].name}</b> today. Two sessions in one day is not more progress, it is less recovery \u2014 only override to catch up a missed log.`};
   if(gap===1)return{ok:0,hard:0,msg:`You trained <b>${PLAN[last.day].name}</b> yesterday. At 3 days a week the plan wants a rest day in between.`};
   return{ok:1,msg:`Last session: <b>${PLAN[last.day].name}</b>, ${gap} days ago.`};
 }
@@ -466,9 +468,28 @@ function endSession(){
 }
 
 /* ================= HISTORY ================= */
+function diag(){
+  let ls="?", persisted="?";
+  try{ localStorage.setItem("liftlog:probe","1");
+       ls = localStorage.getItem("liftlog:probe")==="1" ? "writable" : "read-back failed";
+       localStorage.removeItem("liftlog:probe"); }
+  catch(e){ ls = "BLOCKED ("+(e.name||"error")+")"; }
+  let raw=null; try{ raw=localStorage.getItem(KEY) }catch(e){}
+  const standalone = (window.navigator.standalone===true) ? "home-screen app" :
+    (window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches ? "standalone" : "browser tab");
+  return `<div class="diag">
+    <b>STORAGE CHECK</b><br>
+    localStorage: ${ls}<br>
+    saved record: ${raw? raw.length+" chars" : "EMPTY"}<br>
+    sessions in memory: ${DB.history.length}<br>
+    mode: ${standalone}<br>
+    origin: ${location.origin}<br>
+    window.storage: ${window.storage?"present":"absent"}
+  </div>`;
+}
 function history(){
   if(!DB.history.length)return `<div class="empty">No sessions yet.<br>
-    Start a day, log your sets, and end the session — the progression shows up here.</div>`;
+    Start a day, log your sets, and end the session — the progression shows up here.</div>`+diag();
   const rows=ALL.map(ex=>{
     const hits=DB.history.filter(s=>s.entries[ex.id]);
     if(!hits.length)return null;
@@ -484,7 +505,7 @@ function history(){
       <span class="t">${PLAN[s.day].name} · ${Object.keys(s.entries).length} exercises</span>
       <span class="v">${s.vol.toLocaleString()} lb</span></div>`).join('');
   return `<div class="h2">Weight progression</div><div class="hcard">${rows}</div>
-    <div class="h2">Sessions · ${DB.history.length}</div><div class="hcard">${ses}</div>`;
+    <div class="h2">Sessions · ${DB.history.length}</div><div class="hcard">${ses}</div>`+diag();
 }
 
 /* ================= CONTROLS ================= */
@@ -512,7 +533,7 @@ document.getElementById('file').addEventListener('change',ev=>{
 });
 document.getElementById('wipe').addEventListener('click',()=>{
   if(!confirm('Erase all history, progression and the open session?'))return;
-  DB={next:{},history:[],active:null};save();render();toast('Cleared');
+  DB={next:{},history:[],active:null,holds:{}};save();render();toast('Cleared');
 });
 
 /* ================= BOOT ================= */
