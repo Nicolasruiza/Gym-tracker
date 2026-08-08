@@ -353,7 +353,7 @@ function sessBox(){
       <p>Finish or discard that one before starting another day.</p></div>`;
   const g=gate(), sug=nextDay();
   const last=DB.history[DB.history.length-1];
-  const canReopen=last&&last.date===today();
+  const canReopen=last&&last.date===today()&&last.day===view;
   const cls=g.ok?'':'rest';
   return `<div class="sess ${cls}">
     <div class="st"><span class="dot ${g.ok?'go':'no'}"></span><b>${g.ok?'Ready':'Rest day'}</b></div>
