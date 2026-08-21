@@ -10,12 +10,8 @@
 <style>
   :root{--ink:#0F1518;--card:#1A2328;--card2:#222D33;--bone:#EDE8DD;--muted:#8B9BA3;
     --pine:#43A177;--brass:#D4A94F;--red:#F08A80;--rule:#2C383E;--pink:#e58fb0;
-    --accent:#43A177;--accentText:#08110D;--accentDim:#1E4034;--accentBright:#5FD3A0;
-    --accentBorder:#2F5748;--accentGradA:#1E332B;--accentGradB:#20332C;
-    --accentGlow:rgba(67,161,119,.18)}
-  body.theme-sa{--accent:#e58fb0;--accentText:#2A0F1B;--accentDim:#3A2030;--accentBright:#F5B8D0;
-    --accentBorder:#5A2E42;--accentGradA:#33212B;--accentGradB:#332128;
-    --accentGlow:rgba(229,143,176,.22)}
+    --accent:#43A177;--accentText:#08130E;--accentDim:#1A342D;--accentBright:#7FBE9C;
+    --accentBorder:#28483C;--accentGradA:#182A26;--accentGlow:rgba(67,161,119,.2)}
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   body{background:var(--ink);color:var(--bone);font-family:"IBM Plex Sans",system-ui,sans-serif;padding-bottom:80px}
   .wrap{max-width:600px;margin:0 auto;padding:0 12px}
@@ -25,15 +21,22 @@
   .avatar{width:46px;height:46px;min-width:44px;min-height:44px;border-radius:50%;border:none;cursor:pointer;
     font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:15px;letter-spacing:.04em;
     display:flex;align-items:center;justify-content:center;background:var(--accent);color:var(--accentText)}
-  .avatar.sa{background:var(--pink);color:#2A0F1B}
+  .pname{font-family:"Barlow Condensed",sans-serif;font-size:14px;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--muted)}
   .cycleday{font-family:"IBM Plex Mono",monospace;font-size:9.5px;color:var(--muted);letter-spacing:.08em;min-height:12px}
   .switcher{position:absolute;top:52px;left:50%;transform:translateX(-50%);z-index:20;
     background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:6px;
-    display:flex;gap:6px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+    display:flex;flex-direction:column;gap:5px;box-shadow:0 6px 18px rgba(0,0,0,.4);min-width:190px}
   .switcher[hidden]{display:none}
-  .swopt{min-width:44px;min-height:44px;border:none;border-radius:8px;background:var(--card2);color:var(--bone);
-    font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:14px;cursor:pointer;padding:6px 12px}
+  .swopt{min-height:44px;border:none;border-radius:8px;background:var(--card2);color:var(--bone);
+    font-family:"Barlow Condensed",sans-serif;font-weight:700;font-size:14px;letter-spacing:.05em;
+    cursor:pointer;padding:8px 12px;display:flex;align-items:center;gap:9px;text-align:left}
+  .swopt .ini{width:26px;height:26px;border-radius:50%;flex:0 0 26px;display:flex;
+    align-items:center;justify-content:center;font-size:11px;color:#0B0F11}
   .swopt.active{outline:2px solid var(--accent)}
+  .swadd{min-height:44px;border:1px dashed var(--rule);border-radius:8px;background:transparent;
+    color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.1em;cursor:pointer}
+
   .lowe{display:block;width:100%;margin-top:9px;min-height:44px;padding:11px;border-radius:8px;
     border:1px solid var(--pink);background:transparent;color:var(--pink);
     font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;
@@ -43,29 +46,96 @@
     border:1px solid var(--rule);background:transparent;color:var(--muted);
     font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;cursor:pointer}
 
-  .tabs{position:sticky;top:0;z-index:10;background:var(--ink);padding:12px 0 8px;display:flex;gap:5px}
-  .tab{flex:1;padding:11px 3px;border:none;border-radius:8px;cursor:pointer;background:var(--card);
-    color:var(--muted);font-family:"Barlow Condensed",sans-serif;font-size:17px;font-weight:600;
-    text-transform:uppercase;letter-spacing:.05em;line-height:1.1}
-  .tab small{display:block;font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.1em;opacity:.7;margin-top:2px}
-  .tab.on{background:var(--accent);color:var(--accentText)}
-  .tab.locked{opacity:.5}
-  .mini{background:var(--card);color:var(--txt);border:1px solid #3c4744;border-radius:6px;
+  /* week strip */
+  .week{position:sticky;top:0;z-index:10;background:var(--ink);padding:12px 0 6px;display:flex;gap:4px}
+  .wd{flex:1;min-height:52px;padding:7px 1px;border:none;border-radius:8px;cursor:pointer;
+    background:var(--card);color:var(--muted);font-family:"Barlow Condensed",sans-serif;
+    font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;line-height:1.1}
+  .wd small{display:block;font-family:"IBM Plex Mono",monospace;font-size:7.5px;
+    letter-spacing:.06em;opacity:.75;margin-top:3px}
+  .wd.on{background:var(--accent);color:var(--accentText)}
+  .wd.today:not(.on){box-shadow:inset 0 0 0 1.5px var(--accent)}
+  .wd.rest{opacity:.5}
+  .wd.done small::after{content:" \2713";opacity:1}
+  .histbtn{width:100%;min-height:44px;margin-bottom:8px;border:1px solid var(--rule);border-radius:9px;
+    background:transparent;color:var(--muted);font-family:"IBM Plex Mono",monospace;
+    font-size:10px;letter-spacing:.14em;cursor:pointer}
+  .histbtn.on{background:var(--accentDim);color:var(--accent);border-color:var(--accent)}
+
+  .daysel{display:flex;gap:5px;margin-bottom:10px}
+  .daysel button{flex:1;min-height:44px;border:1px solid var(--rule);border-radius:8px;
+    background:transparent;color:var(--muted);font-family:"IBM Plex Mono",monospace;
+    font-size:9.5px;letter-spacing:.07em;cursor:pointer}
+  .daysel button.on{background:var(--accentDim);color:var(--accent);border-color:var(--accent)}
+
+  /* cardio */
+  .z2{background:var(--card2);border-radius:9px;padding:11px;margin-bottom:12px;
+    font-size:12.5px;line-height:1.55;color:var(--muted)}
+  .z2 b{color:var(--bone)}
+  .cardiorow{display:flex;gap:6px;align-items:center;margin-bottom:10px}
+  .cardiorow .fld{flex:0 0 96px}
+  .weekbar{height:7px;background:#131B1F;border-radius:99px;overflow:hidden;margin:8px 0 6px}
+  .weekbar span{display:block;height:100%;background:var(--accent)}
+  .weekno{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);letter-spacing:.06em}
+
+  /* setup */
+  .setup{background:var(--card);border-radius:12px;padding:14px;margin:6px 0 16px;border:1px solid var(--rule)}
+  .pf{border-bottom:1px solid var(--rule);padding:11px 0}
+  .pf:last-of-type{border-bottom:none}
+  .pfg{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+  .pfg label{font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:.1em;
+    color:var(--muted);display:block;margin-bottom:3px}
+  .pfg input,.pfg select{width:100%;height:44px;padding:6px 8px;border-radius:8px;border:1px solid var(--rule);
+    background:#131B1F;color:var(--bone);font-family:"IBM Plex Mono",monospace;font-size:13px;text-align:left}
+  .pfg input[type=color]{padding:3px}
+  .chkrow{display:flex;gap:14px;margin:8px 0;flex-wrap:wrap}
+  .chkrow label{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);
+    display:flex;align-items:center;gap:6px;min-height:44px;cursor:pointer}
+  .chkrow input{width:20px;height:20px}
+
+  /* alternates */
+  .altbtn{flex:0 0 44px;height:44px;border-radius:9px;background:var(--card2);border:none;cursor:pointer;
+    font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.05em;color:var(--muted)}
+  .altbtn.on{background:var(--accentDim);color:var(--accent)}
+  .altlist{margin-top:9px;display:flex;flex-wrap:wrap;gap:6px}
+  .altlist button{min-height:40px;border:1px solid var(--rule);border-radius:8px;background:transparent;
+    color:var(--bone);font-family:"IBM Plex Sans",sans-serif;font-size:12px;padding:9px 10px;cursor:pointer}
+  .altlist button.cur{border-color:var(--accent);color:var(--accent)}
+  .swapped{background:#1D3548;color:#69AEE8;font-family:"IBM Plex Mono",monospace;font-size:9.5px;
+    padding:5px 9px;border-radius:99px;letter-spacing:.06em}
+  .ex.inj{border-color:#7A4C48;background:linear-gradient(180deg,#2A1B1A,#1A2529)}
+
+  /* focus + injury */
+  .fsel{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+  .fsel button{min-height:44px;padding:9px 11px;border:1px solid var(--rule);border-radius:8px;
+    background:transparent;color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:10px;
+    letter-spacing:.07em;cursor:pointer}
+  .fsel button.on{background:var(--accentDim);color:var(--accent);border-color:var(--accent)}
+  .dx{background:var(--card2);border-radius:9px;padding:11px;margin-top:10px;
+    font-size:12.5px;line-height:1.55;color:var(--muted)}
+  .dx b{color:var(--bone)}
+  .dxbar{height:7px;background:#131B1F;border-radius:99px;overflow:hidden;margin:8px 0 6px}
+  .dxbar span{display:block;height:100%;background:var(--accent)}
+  .cost{background:#2A1B1A;border:1px solid #7A4C48;border-radius:9px;padding:11px;margin-top:10px;
+    font-size:12.5px;line-height:1.55;color:#E8C4BF}
+  .cost b{color:var(--bone)}
+  .nag{background:#3A2E22;border:1px solid var(--brass);border-radius:9px;padding:11px;margin-bottom:12px;
+    font-size:12.5px;line-height:1.5;color:var(--brass)}
+  .nag .ebtns{margin-top:9px}
+
+  .mini{background:var(--card);color:var(--bone);border:1px solid #3c4744;border-radius:6px;
         font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.08em;padding:6px 9px;cursor:pointer}
   .mini.del{border-color:#7a3b3b;color:#e0a0a0}
   .sesedit{padding:10px 0;border-bottom:1px solid #2a3330}
   .erow{display:grid;grid-template-columns:1fr 56px 44px 44px 44px;gap:5px;align-items:center;margin-bottom:6px}
   .erow.head{font-family:"IBM Plex Mono",monospace;font-size:9px;opacity:.6;letter-spacing:.1em}
   .erow .en{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .ei{background:#101a17;border:1px solid #3c4744;border-radius:6px;color:var(--txt);
+  .ei{background:#101a17;border:1px solid #3c4744;border-radius:6px;color:var(--bone);
       padding:7px 4px;font-size:13px;text-align:center;width:100%;min-height:34px}
   .ei.date{grid-column:2/6;text-align:left;padding-left:8px}
   .ebtns{display:flex;gap:8px;margin-top:8px}
   .diag{margin-top:18px;padding:12px;border:1px dashed #4a5550;border-radius:8px;
         font-family:"IBM Plex Mono",monospace;font-size:10.5px;line-height:1.7;opacity:.75}
-  .tab.done{opacity:.45}
-  .tab.done small::after{content:" \2713";opacity:1}
-  .tab.next:not(.on){box-shadow:inset 0 0 0 1.5px var(--accent)}
 
   /* session control */
   .sess{background:var(--card);border-radius:12px;padding:15px;margin:6px 0 16px;border:1px solid var(--rule)}
@@ -99,7 +169,7 @@
   .blk i{flex:1;height:1px;background:var(--rule)}
 
   .ex{background:var(--card);border-radius:11px;padding:13px;margin-bottom:9px;border:1px solid transparent}
-  .ex.key{border-color:var(--accentBorder);background:linear-gradient(180deg,var(--accentGradB),#1A2529)}
+  .ex.key{border-color:var(--accentBorder);background:linear-gradient(180deg,var(--accentGradA),#1A2529)}
   .ex.done{border-color:var(--accent)}
   .ex.idle{opacity:.5}
   .top{display:flex;align-items:center;gap:8px;margin-bottom:11px}
@@ -166,14 +236,13 @@
   .sesrow .d{color:var(--muted);flex:0 0 52px}
   .sesrow .t{flex:1;font-family:"IBM Plex Sans",sans-serif;font-size:13.5px}
   .sesrow .v{color:var(--brass)}
-  h2s{}
   .h2{font-family:"Barlow Condensed",sans-serif;font-size:22px;text-transform:uppercase;
     letter-spacing:.05em;margin:22px 0 10px;color:var(--bone)}
   .empty{color:var(--muted);font-size:13px;text-align:center;padding:26px 10px;line-height:1.6}
 
   .bar2{display:flex;gap:8px;margin-top:24px}
-  .bar2 button{flex:1;padding:12px;border:1px solid var(--rule);background:transparent;color:var(--muted);
-    border-radius:9px;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;cursor:pointer}
+  .bar2 button{flex:1;min-height:44px;padding:12px 4px;border:1px solid var(--rule);background:transparent;color:var(--muted);
+    border-radius:9px;font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;cursor:pointer}
   .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(90px);
     background:var(--accent);color:var(--accentText);padding:12px 18px;border-radius:99px;font-weight:600;
     font-size:13.5px;transition:transform .25s ease;z-index:50;max-width:92vw;text-align:center}
@@ -184,21 +253,16 @@
 <div class="wrap">
   <div class="profilebar">
     <button class="avatar" id="avatarBtn" aria-label="Switch profile">NR</button>
+    <div class="pname" id="pName"></div>
     <div class="cycleday" id="cycleDay"></div>
-    <div class="switcher" id="switcher" hidden>
-      <button class="swopt" data-p="nr">NR</button>
-      <button class="swopt" data-p="sa">SA</button>
-    </div>
+    <div class="switcher" id="switcher" hidden></div>
   </div>
-  <div class="tabs">
-    <button class="tab on" data-d="1">Day 1<small>UPPER A</small></button>
-    <button class="tab" data-d="2">Day 2<small>LEGS</small></button>
-    <button class="tab" data-d="3">Day 3<small>UPPER B</small></button>
-    <button class="tab" data-d="h">History<small>PROGRESS</small></button>
-  </div>
+  <div class="week" id="week"></div>
+  <button class="histbtn" id="histBtn">HISTORY · PROGRESS</button>
   <div id="sess"></div>
   <div id="list"></div>
   <div class="bar2">
+    <button id="setup">SETUP</button>
     <button id="export">EXPORT</button>
     <button id="import">IMPORT</button>
     <button id="wipe">RESET</button>
@@ -208,47 +272,54 @@
 <div class="toast" id="toast"></div>
 
 <script>
-/* ================= PLANS ================= */
+/* ================= PLANS =================
+   `w` is the explicit starting load and stays authoritative for the two seeded
+   profiles, so their numbers never move. `frac` (load as a fraction of bodyweight)
+   is only used to generate a plan for a NEWLY created profile. */
 const PLAN_NR={
- 1:{name:"Upper A",blocks:[
-  {t:"Core · do first",items:[{id:"leg_raise",n:"Hanging leg raise",r:10,w:0,inc:0,bw:1}]},
+ 1:{name:"Upper A",short:"U-A",blocks:[
+  {t:"Core · do first",items:[
+   {id:"leg_raise",n:"Hanging leg raise",r:10,w:0,inc:0,bw:1,frac:0},
+   {id:"pallof",n:"Pallof press (per side)",r:12,w:30,inc:5,frac:.155}]},
   {t:"Basics · free weight",items:[
-   {id:"bb_press",n:"Barbell press",r:6,w:135,inc:5,key:1,bar:45},
-   {id:"lat_pull",n:"Lat pulldown",r:8,w:75,inc:5,key:1,mult:2}]},
+   {id:"bb_press",n:"Barbell press",r:6,w:135,inc:5,key:1,bar:45,frac:.696},
+   {id:"lat_pull",n:"Lat pulldown",r:8,w:75,inc:5,key:1,mult:2,frac:.387}]},
   {t:"Compound",items:[
-   {id:"db_ohp",n:"Dumbbell shoulder press",r:8,w:35,inc:5,each:1},
-   {id:"db_row",n:"Dumbbell row",r:8,w:50,inc:5}]},
+   {id:"db_ohp",n:"Dumbbell shoulder press",r:8,w:35,inc:5,each:1,frac:.180},
+   {id:"db_row",n:"Dumbbell row",r:8,w:50,inc:5,frac:.258}]},
   {t:"Isolation",items:[
-   {id:"m_fly",n:"Machine fly",r:12,w:145,inc:5},
-   {id:"cbl_tri",n:"Cable triceps extension",r:12,w:60,inc:5},
-   {id:"db_curl",n:"Dumbbell bicep curl",r:12,w:30,inc:5,each:1},
-   {id:"face_pull",n:"Face pull",r:15,w:30,inc:5}]}]},
- 2:{name:"Legs",blocks:[
-  {t:"Core · do first",items:[{id:"plank",n:"Plank (seconds)",r:45,w:0,inc:0,bw:1}]},
+   {id:"m_fly",n:"Machine fly",r:12,w:145,inc:5,frac:.747},
+   {id:"cbl_tri",n:"Cable triceps extension",r:12,w:60,inc:5,frac:.309},
+   {id:"db_curl",n:"Dumbbell bicep curl",r:12,w:30,inc:5,each:1,frac:.155},
+   {id:"face_pull",n:"Face pull",r:15,w:30,inc:5,frac:.155}]}]},
+ 2:{name:"Legs",short:"LEG",blocks:[
+  {t:"Core · do first",items:[{id:"plank",n:"Plank (seconds)",r:45,w:0,inc:0,bw:1,frac:0}]},
   {t:"Basics · free weight",items:[
-   {id:"gob_squat",n:"Goblet squat",r:8,w:50,inc:5,key:1},
-   {id:"rdl",n:"Romanian deadlift",r:6,w:95,inc:10,key:1,bar:45}]},
-  {t:"Compound",items:[{id:"leg_press",n:"Leg press",r:10,w:180,inc:10,plates:1}]},
+   {id:"gob_squat",n:"Goblet squat",r:8,w:50,inc:5,key:1,frac:.258},
+   {id:"rdl",n:"Romanian deadlift",r:6,w:95,inc:10,key:1,bar:45,frac:.490}]},
+  {t:"Compound",items:[{id:"leg_press",n:"Leg press",r:10,w:180,inc:10,plates:1,frac:.928}]},
   {t:"Isolation",items:[
-   {id:"ham_curl",n:"Lying hamstring curl",r:12,w:80,inc:10},
-   {id:"leg_ext",n:"Leg extension",r:12,w:100,inc:10},
-   {id:"calf",n:"Calf raise",r:15,w:90,inc:10}]}]},
- 3:{name:"Upper B",blocks:[
-  {t:"Core · do first",items:[{id:"cbl_crunch",n:"Cable crunch",r:15,w:50,inc:5}]},
+   {id:"ham_curl",n:"Lying hamstring curl",r:12,w:80,inc:10,frac:.412},
+   {id:"leg_ext",n:"Leg extension",r:12,w:100,inc:10,frac:.515},
+   {id:"calf",n:"Calf raise",r:15,w:90,inc:10,frac:.464}]}]},
+ 3:{name:"Upper B",short:"U-B",blocks:[
+  {t:"Core · do first",items:[{id:"cbl_crunch",n:"Cable crunch",r:15,w:50,inc:5,frac:.258}]},
   {t:"Basics",items:[
-   {id:"db_incl",n:"Dumbbell incline bench press",r:8,w:45,inc:5,each:1,key:1},
-   {id:"pullup",n:"Pull-ups",r:8,w:0,inc:5,bw:1,key:1}]},
+   {id:"db_incl",n:"Dumbbell incline bench press",r:8,w:45,inc:5,each:1,key:1,frac:.232},
+   {id:"pullup",n:"Pull-ups",r:8,w:0,inc:5,bw:1,key:1,frac:0}]},
   {t:"Compound",items:[
-   {id:"cbl_row",n:"Cable row",r:10,w:70,inc:5},
-   {id:"bb_curl",n:"Barbell curl",r:8,w:70,inc:5,bar:25}]},
+   {id:"cbl_row",n:"Cable row",r:10,w:70,inc:5,frac:.361},
+   {id:"bb_curl",n:"Barbell curl",r:8,w:70,inc:5,bar:25,frac:.361}]},
   {t:"Isolation",items:[
-   {id:"lat_raise",n:"Lateral raise",r:15,w:15,inc:5,each:1},
-   {id:"skull",n:"Skull crusher",r:12,w:40,inc:5,bar:25},
-   {id:"hammer",n:"Hammer curls",r:12,w:25,inc:5,each:1}]}]}
+   {id:"lat_raise",n:"Lateral raise",r:15,w:15,inc:5,each:1,frac:.077},
+   {id:"skull",n:"Skull crusher",r:12,w:40,inc:5,bar:25,frac:.206},
+   {id:"hammer",n:"Hammer curls",r:12,w:25,inc:5,each:1,frac:.129}]}]}
 };
 const PLAN_SA={
- 1:{name:"Upper A",blocks:[
-  {t:"Core · do first",items:[{id:"sa_dead_bug",n:"Dead bug",r:10,w:0,inc:0,bw:1}]},
+ 1:{name:"Upper A",short:"U-A",blocks:[
+  {t:"Core · do first",items:[
+   {id:"sa_dead_bug",n:"Dead bug",r:10,w:0,inc:0,bw:1},
+   {id:"sa_pallof",n:"Pallof press (per side)",r:12,w:15,inc:5}]},
   {t:"Basics · free weight",items:[
    {id:"sa_db_bench",n:"Dumbbell bench press",r:8,w:15,inc:5,key:1,each:1},
    {id:"sa_lat_pull",n:"Lat pulldown",r:10,w:30,inc:5,key:1,mult:2}]},
@@ -260,7 +331,7 @@ const PLAN_SA={
    {id:"sa_cbl_tri",n:"Cable triceps extension",r:12,w:20,inc:5},
    {id:"sa_db_curl",n:"Dumbbell bicep curl",r:12,w:10,inc:5,each:1},
    {id:"sa_face_pull",n:"Face pull",r:15,w:15,inc:5}]}]},
- 2:{name:"Legs",blocks:[
+ 2:{name:"Legs",short:"LEG",blocks:[
   {t:"Core · do first",items:[{id:"sa_glute_bridge",n:"Glute bridge",r:15,w:0,inc:0,bw:1}]},
   {t:"Basics · free weight",items:[
    {id:"sa_gob_squat",n:"Goblet squat",r:10,w:20,inc:5,key:1},
@@ -271,7 +342,7 @@ const PLAN_SA={
    {id:"sa_ham_curl",n:"Lying hamstring curl",r:12,w:30,inc:5},
    {id:"sa_leg_ext",n:"Leg extension",r:12,w:40,inc:5},
    {id:"sa_calf",n:"Calf raise",r:15,w:50,inc:5}]}]},
- 3:{name:"Upper B",blocks:[
+ 3:{name:"Upper B",short:"U-B",blocks:[
   {t:"Core · do first",items:[{id:"sa_side_plank",n:"Side plank (seconds per side)",r:20,w:0,inc:0,bw:1}]},
   {t:"Basics",items:[
    {id:"sa_db_incl",n:"Dumbbell incline press",r:10,w:12,inc:5,key:1,each:1},
@@ -284,11 +355,11 @@ const PLAN_SA={
    {id:"sa_rope_tri",n:"Rope triceps pushdown",r:15,w:20,inc:5},
    {id:"sa_hammer",n:"Hammer curls",r:12,w:10,inc:5,each:1}]}]}
 };
-const BW_NR=194, BW_SA=132;
-const STD_NR={bb_press:.90*BW_NR,lat_pull:.75*BW_NR,db_ohp:.25*BW_NR,db_row:.30*BW_NR,db_curl:.18*BW_NR,
-  rdl:1.25*BW_NR,leg_press:2*BW_NR,db_incl:.33*BW_NR,bb_curl:.38*BW_NR};
-const STD_SA={sa_db_bench:.55*BW_SA,sa_lat_pull:.55*BW_SA,sa_db_ohp:.20*BW_SA,sa_db_incl:.25*BW_SA,
-  sa_pulldown2:.50*BW_SA,sa_rdl:.85*BW_SA,sa_gob_squat:.85*BW_SA,sa_db_curl:.15*BW_SA};
+/* Strength standards as a fraction of the profile's OWN bodyweight. */
+const STD_FRAC_NR={bb_press:.90,lat_pull:.75,db_ohp:.25,db_row:.30,db_curl:.18,
+  rdl:1.25,leg_press:2,db_incl:.33,bb_curl:.38};
+const STD_FRAC_SA={sa_db_bench:.55,sa_lat_pull:.55,sa_db_ohp:.20,sa_db_incl:.25,
+  sa_pulldown2:.50,sa_rdl:.85,sa_gob_squat:.85,sa_db_curl:.15};
 const QMAP_NR={bb_press:"barbell bench press proper form",lat_pull:"lat pulldown proper form",
  db_ohp:"seated dumbbell shoulder press form",db_row:"one arm dumbbell row proper form",
  m_fly:"pec deck machine fly form",cbl_tri:"cable triceps pushdown form",
@@ -300,7 +371,8 @@ const QMAP_NR={bb_press:"barbell bench press proper form",lat_pull:"lat pulldown
  db_incl:"incline dumbbell bench press form",pullup:"assisted pull up proper form",
  cbl_row:"seated cable row proper form",bb_curl:"barbell curl proper form",
  lat_raise:"dumbbell lateral raise proper form",skull:"skull crusher ez bar proper form",
- hammer:"hammer curl proper form",cbl_crunch:"kneeling cable crunch proper form"};
+ hammer:"hammer curl proper form",cbl_crunch:"kneeling cable crunch proper form",
+ pallof:"pallof press anti rotation proper form"};
 const QMAP_SA={sa_dead_bug:"dead bug exercise proper form",sa_db_bench:"dumbbell bench press proper form",
  sa_lat_pull:"lat pulldown proper form",sa_db_ohp:"seated dumbbell shoulder press form",
  sa_cbl_row:"seated cable row proper form",sa_m_fly:"pec deck machine fly form",
@@ -313,22 +385,239 @@ const QMAP_SA={sa_dead_bug:"dead bug exercise proper form",sa_db_bench:"dumbbell
  sa_db_incl:"incline dumbbell bench press form",sa_pulldown2:"assisted pull up machine form",
  sa_cs_row:"chest supported row machine form",sa_landmine:"landmine press proper form",
  sa_lat_raise:"dumbbell lateral raise proper form",sa_rope_tri:"rope triceps pushdown form",
- sa_hammer:"hammer curl proper form"};
+ sa_hammer:"hammer curl proper form",sa_pallof:"pallof press anti rotation proper form"};
+
+/* ================= MOVEMENT METADATA =================
+   Keyed by concept so the two plans (and any generated one) share it.
+   p = primary areas (full set credit), s = secondary (half credit),
+   pat = movement pattern, load = structures an injury would rule out,
+   alts = same-pattern substitutes. Alternates carry their OWN id so their
+   numbers never fold into the exercise they replaced. */
+const AREAS=['chest','back','shoulders','arms','glutes','hamstrings','quads','calves','core'];
+const PAT_LABEL={hinge:"hip hinge",squat:"squat pattern","push-h":"horizontal press",
+  "push-v":"overhead press","pull-v":"vertical pull","pull-h":"horizontal row",
+  core:"trunk flexion","anti-ext":"anti-extension","anti-rot":"anti-rotation",
+  "anti-lat":"anti-lateral-flexion",iso:"isolation work"};
+const CONCEPT={
+ core_flex:{p:['core'],pat:'core',load:['spine'],alts:[
+   {id:"alt_hang_knee",n:"Hanging knee raise",frac:0,bw:1,inc:0},
+   {id:"alt_lying_raise",n:"Lying leg raise",frac:0,bw:1,inc:0}]},
+ core_antiext:{p:['core'],pat:'anti-ext',load:[],alts:[
+   {id:"alt_dead_bug",n:"Dead bug",frac:0,bw:1,inc:0},
+   {id:"alt_ab_wheel",n:"Ab wheel rollout",frac:0,bw:1,inc:0}]},
+ core_antirot:{p:['core'],pat:'anti-rot',load:[],alts:[
+   {id:"alt_band_pallof",n:"Band Pallof press",frac:0,bw:1,inc:0},
+   {id:"alt_cable_chop",n:"Cable chop",frac:.15,inc:5}]},
+ core_antilat:{p:['core'],pat:'anti-lat',load:[],alts:[
+   {id:"alt_suitcase",n:"Suitcase carry",frac:.25,inc:5}]},
+ bench:{p:['chest'],s:['arms','shoulders'],pat:'push-h',load:['shoulder'],alts:[
+   {id:"alt_db_bench",n:"Dumbbell bench press",frac:.13,inc:5,each:1},
+   {id:"alt_machine_press",n:"Chest press machine",frac:.60,inc:5}]},
+ incline:{p:['chest'],s:['arms','shoulders'],pat:'push-h',load:['shoulder'],alts:[
+   {id:"alt_incline_machine",n:"Incline press machine",frac:.50,inc:5},
+   {id:"alt_incline_bb",n:"Incline barbell press",frac:.50,inc:5,bar:45}]},
+ fly:{p:['chest'],pat:'iso',load:['shoulder'],alts:[
+   {id:"alt_cable_fly",n:"Cable fly",frac:.20,inc:5},
+   {id:"alt_db_fly",n:"Dumbbell fly",frac:.10,inc:5,each:1}]},
+ ohp:{p:['shoulders'],s:['arms'],pat:'push-v',load:['shoulder'],alts:[
+   {id:"alt_machine_ohp",n:"Shoulder press machine",frac:.35,inc:5},
+   {id:"alt_landmine",n:"Landmine press",frac:.20,inc:5}]},
+ side_delt:{p:['shoulders'],pat:'iso',load:['shoulder'],alts:[
+   {id:"alt_cable_lat_raise",n:"Cable lateral raise",frac:.06,inc:5},
+   {id:"alt_machine_lat_raise",n:"Lateral raise machine",frac:.20,inc:5}]},
+ pulldown:{p:['back'],s:['arms'],pat:'pull-v',load:['shoulder','elbow'],alts:[
+   {id:"alt_neutral_pulldown",n:"Neutral-grip pulldown",frac:.39,inc:5,mult:2},
+   {id:"alt_assist_pullup",n:"Assisted pull-up machine",frac:.30,inc:5}]},
+ pullup:{p:['back'],s:['arms'],pat:'pull-v',load:['shoulder','elbow'],alts:[
+   {id:"alt_inverted_row",n:"Inverted row",frac:0,bw:1,inc:5},
+   {id:"alt_assist_pullup2",n:"Assisted pull-up machine",frac:.30,inc:5}]},
+ row:{p:['back'],s:['arms'],pat:'pull-h',load:['lowback'],alts:[
+   {id:"alt_cs_row",n:"Chest-supported row",frac:.25,inc:5},
+   {id:"alt_row_1arm",n:"Single-arm cable row",frac:.20,inc:5}]},
+ rear_delt:{p:['shoulders'],s:['back'],pat:'iso',load:['shoulder'],alts:[
+   {id:"alt_rear_delt_fly",n:"Rear delt fly",frac:.10,inc:5,each:1},
+   {id:"alt_pull_apart",n:"Band pull-apart",frac:0,bw:1,inc:0}]},
+ tri:{p:['arms'],pat:'iso',load:['elbow'],alts:[
+   {id:"alt_rope_tri",n:"Rope pushdown",frac:.28,inc:5},
+   {id:"alt_oh_tri",n:"Overhead cable extension",frac:.20,inc:5}]},
+ curl:{p:['arms'],pat:'iso',load:['elbow'],alts:[
+   {id:"alt_cable_curl",n:"Cable curl",frac:.20,inc:5},
+   {id:"alt_ez_curl",n:"EZ-bar curl",frac:.25,inc:5,bar:25}]},
+ squat:{p:['quads','glutes'],s:['core'],pat:'squat',load:['knee','spine','lowback'],alts:[
+   {id:"alt_hack_squat",n:"Hack squat",frac:.50,inc:10},
+   {id:"alt_split_squat",n:"Bulgarian split squat",frac:.13,inc:5,each:1}]},
+ legpress:{p:['quads','glutes'],pat:'squat',load:['knee'],alts:[
+   {id:"alt_hack_squat2",n:"Hack squat",frac:.50,inc:10},
+   {id:"alt_single_leg_press",n:"Single-leg press",frac:.35,inc:10}]},
+ hinge:{p:['hamstrings','glutes'],s:['back'],pat:'hinge',load:['spine','lowback'],alts:[
+   {id:"alt_db_rdl",n:"Dumbbell RDL",frac:.26,inc:5,each:1},
+   {id:"alt_back_ext",n:"45° back extension",frac:0,bw:1,inc:5}]},
+ hipthrust:{p:['glutes'],s:['hamstrings'],pat:'hinge',load:[],alts:[
+   {id:"alt_single_thrust",n:"Single-leg hip thrust",frac:.15,inc:5},
+   {id:"alt_glute_bridge",n:"Glute bridge",frac:0,bw:1,inc:5}]},
+ hamcurl:{p:['hamstrings'],pat:'iso',load:['knee'],alts:[
+   {id:"alt_seated_ham",n:"Seated hamstring curl",frac:.40,inc:5},
+   {id:"alt_nordic",n:"Nordic curl (assisted)",frac:0,bw:1,inc:0}]},
+ legext:{p:['quads'],pat:'iso',load:['knee'],alts:[
+   {id:"alt_sissy",n:"Sissy squat",frac:0,bw:1,inc:0}]},
+ calf:{p:['calves'],pat:'iso',load:[],alts:[
+   {id:"alt_seated_calf",n:"Seated calf raise",frac:.25,inc:10}]},
+ glute_iso:{p:['glutes'],pat:'iso',load:[],alts:[
+   {id:"alt_abductor",n:"Hip abductor machine",frac:.30,inc:5}]}
+};
+const CONCEPT_OF={
+ /* NR */
+ leg_raise:'core_flex', cbl_crunch:'core_flex', plank:'core_antiext', pallof:'core_antirot',
+ bb_press:'bench', db_incl:'incline', m_fly:'fly', db_ohp:'ohp', lat_raise:'side_delt',
+ lat_pull:'pulldown', pullup:'pullup', db_row:'row', cbl_row:'row', face_pull:'rear_delt',
+ cbl_tri:'tri', skull:'tri', db_curl:'curl', bb_curl:'curl', hammer:'curl',
+ gob_squat:'squat', leg_press:'legpress', rdl:'hinge', ham_curl:'hamcurl',
+ leg_ext:'legext', calf:'calf',
+ /* SA */
+ sa_dead_bug:'core_antiext', sa_side_plank:'core_antilat', sa_glute_bridge:'glute_iso',
+ sa_pallof:'core_antirot',
+ sa_db_bench:'bench', sa_db_incl:'incline', sa_m_fly:'fly', sa_db_ohp:'ohp',
+ sa_landmine:'ohp', sa_lat_raise:'side_delt', sa_lat_pull:'pulldown', sa_pulldown2:'pulldown',
+ sa_cbl_row:'row', sa_cs_row:'row', sa_face_pull:'rear_delt',
+ sa_cbl_tri:'tri', sa_rope_tri:'tri', sa_db_curl:'curl', sa_hammer:'curl',
+ sa_gob_squat:'squat', sa_leg_press:'legpress', sa_rdl:'hinge', sa_hip_thrust:'hipthrust',
+ sa_ham_curl:'hamcurl', sa_leg_ext:'legext', sa_calf:'calf',
+ /* focus / injury additions */
+ fx_hip_thrust:'hipthrust', fx_kickback:'glute_iso', fx_seated_ham:'hamcurl',
+ fx_incline_curl:'curl', fx_cable_lat:'side_delt', fx_pullover:'row', fx_cable_fly:'fly',
+ fx_cs_row:'row', fx_pull_apart:'rear_delt', fx_back_ext:'hinge', fx_m_fly2:'fly'
+};
+const EMPTY_META={p:[],s:[],pat:'',load:[],alts:[]};
+function metaOf(id){
+  const c=CONCEPT_OF[id];
+  if(c&&CONCEPT[c])return CONCEPT[c];
+  // an alternate inherits the metadata of the concept that owns it
+  for(const k in CONCEPT){ if(CONCEPT[k].alts.some(a=>a.id===id)) return CONCEPT[k]; }
+  return EMPTY_META;
+}
+
+/* ================= FOCUS AREAS =================
+   Emphasis ADDS volume. Nothing is ever removed from the base plan to make room.
+   Each note has to earn its place by contradicting the common assumption. */
+const FOCUS={
+ glutes:{label:"GLUTES",target:12,bump:'hipthrust',
+  note:"Volume is rarely the real limiter. The usual pattern is a tucked pelvis under load, where the glutes never fully shorten — so extra sets just add fatigue. Test it first: a hip thrust should be felt in the glutes, not the lower back or the hamstrings.",
+  add:[{day:2,block:"Basics · free weight",match:"hip thrust",primary:1,
+        ex:{id:"fx_hip_thrust",n:"Hip thrust",r:10,frac:.55,inc:5,key:1}},
+       {day:2,block:"Isolation",match:"kickback",
+        ex:{id:"fx_kickback",n:"Cable kickback",r:15,frac:.10,inc:5}}]},
+ hamstrings:{label:"HAMSTRINGS",target:10,bump:'hamcurl',
+  note:"You cannot reduce fat over a muscle by training that muscle. Spot reduction does not work — leanness comes from the deficit, and this only builds what sits underneath it.",
+  add:[{day:2,block:"Isolation",match:"seated hamstring",
+        ex:{id:"fx_seated_ham",n:"Seated hamstring curl",r:12,frac:.40,inc:5}}]},
+ arms:{label:"ARMS",target:12,bump:'curl',
+  note:"Biceps already work on every row and pulldown in the plan. The usual gap is total pulling volume, not curls — check how much back work is actually in the week before adding more direct arm work.",
+  add:[{day:3,block:"Isolation",match:"incline curl",
+        ex:{id:"fx_incline_curl",n:"Incline dumbbell curl",r:12,frac:.12,inc:5,each:1}}]},
+ shoulders:{label:"SHOULDERS",target:12,bump:'side_delt',
+  note:"Front delts are already covered by every press you do. Side delts are what is missing, and they respond to frequency and lighter high-rep work far more than to heavy pressing.",
+  add:[{day:1,block:"Isolation",match:"cable lateral",
+        ex:{id:"fx_cable_lat",n:"Cable lateral raise",r:15,frac:.06,inc:5}}]},
+ core:{label:"CORE",target:10,
+  note:"Abs are visible at low body fat and are trained like any other muscle — crunches do not burn belly fat. A longer plank mostly builds tolerance for being bored, so this adds sets, not minutes, and they stay at the front of the session.",
+  add:[]},   /* deliberately sets-only: no fourth exercise, no longer holds */
+ back:{label:"BACK",target:12,bump:'pulldown',
+  note:"Vertical pulling and horizontal rowing are not interchangeable and most people are short on one of them. Check the split before adding volume — three rows and no pulldown is a gap, not a preference.",
+  add:[{day:1,block:"Compound",match:"pullover",
+        ex:{id:"fx_pullover",n:"Cable pullover",r:12,frac:.25,inc:5}}]},
+ chest:{label:"CHEST",target:12,bump:'fly',
+  note:"Flat versus incline matters less than most people think. What usually limits chest growth is load in the stretched position at the bottom — pressing through a short, comfortable range skips exactly the part that drives it.",
+  add:[{day:3,block:"Isolation",match:"cable fly",
+        ex:{id:"fx_cable_fly",n:"Cable fly",r:12,frac:.20,inc:5}}]}
+};
+
+/* ================= INJURIES =================
+   Flag the injury; the app infers which exercises it rules out, states what that
+   costs in weekly volume, and offers substitutes that avoid the loaded structure. */
+const INJURIES={
+ spine:{label:"RIB / SPINE",loads:['spine'],
+  why:"Neither a leg curl nor a hip thrust loads the spine the way a bar on your back or a loaded hinge does.",
+  subs:[{day:2,block:"Isolation",match:"seated hamstring",
+         ex:{id:"fx_seated_ham",n:"Seated hamstring curl",r:12,frac:.40,inc:5}},
+        {day:2,block:"Isolation",match:"hip thrust",
+         ex:{id:"fx_hip_thrust",n:"Hip thrust",r:12,frac:.55,inc:5}}]},
+ lowback:{label:"LOWER BACK",loads:['lowback','spine'],
+  why:"Supported and machine-based work keeps the hamstrings and glutes loaded without asking the lower back to brace a free weight.",
+  subs:[{day:2,block:"Isolation",match:"seated hamstring",
+         ex:{id:"fx_seated_ham",n:"Seated hamstring curl",r:12,frac:.40,inc:5}},
+        {day:2,block:"Isolation",match:"hip thrust",
+         ex:{id:"fx_hip_thrust",n:"Hip thrust",r:12,frac:.55,inc:5}}]},
+ shoulder:{label:"SHOULDER",loads:['shoulder'],
+  why:"Chest-supported rowing and light band work keep the upper back moving without overhead or bench loading.",
+  subs:[{day:1,block:"Compound",match:"chest-supported",
+         ex:{id:"fx_cs_row",n:"Chest-supported row",r:12,frac:.25,inc:5}},
+        {day:1,block:"Isolation",match:"pull-apart",
+         ex:{id:"fx_pull_apart",n:"Band pull-apart",r:20,frac:0,inc:0,bw:1}}]},
+ knee:{label:"KNEE",loads:['knee'],
+  why:"Hip-dominant work loads the glutes and hamstrings without bending the knee under load.",
+  subs:[{day:2,block:"Basics · free weight",match:"hip thrust",
+         ex:{id:"fx_hip_thrust",n:"Hip thrust",r:12,frac:.55,inc:5,key:1}},
+        {day:2,block:"Isolation",match:"back extension",
+         ex:{id:"fx_back_ext",n:"45° back extension",r:15,frac:0,inc:0,bw:1}}]},
+ elbow:{label:"ELBOW / WRIST",loads:['elbow'],
+  why:"Machine pressing and fly work keeps chest and shoulder volume up while the elbow settles.",
+  subs:[{day:1,block:"Isolation",match:"machine fly",
+         ex:{id:"fx_m_fly2",n:"Machine fly",r:15,frac:.60,inc:5}}]}
+};
+const NAG_DAYS=14;
+
+/* Every exercise definition the app knows about, so a lift that has since left the
+   plan (a released injury substitute, an alternate you used once) still resolves
+   in history instead of silently vanishing from the progression list. */
+const EX_INDEX={};
+(function(){
+  const add=x=>{ if(x&&x.id&&!EX_INDEX[x.id])EX_INDEX[x.id]={...x} };
+  [PLAN_NR,PLAN_SA].forEach(P=>[1,2,3].forEach(d=>P[d].blocks.forEach(b=>b.items.forEach(add))));
+  Object.keys(CONCEPT).forEach(k=>(CONCEPT[k].alts||[]).forEach(add));
+  Object.keys(FOCUS).forEach(k=>(FOCUS[k].add||[]).forEach(sp=>add(sp.ex)));
+  Object.keys(INJURIES).forEach(k=>(INJURIES[k].subs||[]).forEach(sp=>add(sp.ex)));
+})();
+const exById=id=>(typeof ALL!=='undefined'&&ALL.find(x=>x.id===id))||EX_INDEX[id]||null;
+/* ---- BUG: volume was computed three different ways (live counter, endSession,
+   and the edit recalc), so a session's number jumped as soon as you edited it.
+   One formula now: per-side dumbbells and dual cables both move 2x the logged weight. */
+const volOf=(id,w,reps)=>{
+  const ex=exById(id)||{}, f=(ex.mult||1)*(ex.each?2:1);
+  return (reps||[]).reduce((a,r)=>a+((r||0)*(w||0)*f),0);
+};
+
+/* Experience level drives starting load and increment for GENERATED plans only. */
+const EXP={
+  "new":      {f:.50, inc:5,   label:"New to lifting"},
+  "returning":{f:.75, inc:5,   label:"Returning"},
+  "trained":  {f:1.0, inc:null,label:"Trained"}   // null = keep the template's own increment
+};
+
+/* ================= STORAGE KEYS ================= */
+const KEY_BASE="liftlog:v2";
+const ACTIVE_KEY="liftlog:profile";
+const PROFILES_KEY="liftlog:profiles";
+const keyFor=id=>KEY_BASE+":"+id;
+const WEEK_DEFAULT=["strength","easy","strength","easy","strength","rest","rest"];
+const CARDIO_TARGET=150;
+
+function newId(){return "p_"+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function defaultDB(planKey){
+  return {next:{},history:[],active:null,
+          holds: planKey==='nr' ? {rdl:1} : {},
+          cycleStarts:[], week:[...WEEK_DEFAULT], cardio:[],
+          focus:null, injuries:[], cycleAnchor:null};   // anchor() sets this on first use
+}
 
 /* ================= STATE ================= */
-const KEY_BASE="liftlog:v2";
-const PROFILE_KEY="liftlog:profile";
-const keyFor=p=>KEY_BASE+":"+p;
-function defaultDB(p){
-  return p==='sa'
-    ? {next:{},history:[],active:null,holds:{},cycleStarts:[]}
-    : {next:{},history:[],active:null,holds:{rdl:1},cycleStarts:[]};
-}
-let profile='nr';
-let DB=defaultDB(profile);   // holds = injury freeze, no progression
-let editIdx=null;
-let preLowEnergy=false;
-let view=1, hydrated=false, dirty=false, storageOK=null;
+let profiles=[];
+let profile=null;           // the active profile OBJECT
+let DB=defaultDB('nr');
+let editIdx=null, preLowEnergy=false, setupOpen=false, altOpen=null;
+let view=1;                 // rotation day 1..3, only meaningful when viewMode==='strength'
+let viewMode='strength';    // strength | easy | rest | history
+let viewSlot=0;             // 0..6, Mon..Sun
+let hydrated=false, dirty=false, storageOK=null;
 
 const store={
  async get(key){if(window.storage){try{const r=await window.storage.get(key);return r?r.value:null}catch(e){}}
@@ -340,30 +629,245 @@ async function save(){
   dirty=true;
   const payload=JSON.stringify(DB);
   try{
-    await store.set(keyFor(profile),payload);
-    const back=await store.get(keyFor(profile));
+    await store.set(keyFor(profile.id),payload);
+    const back=await store.get(keyFor(profile.id));
     storageOK = back===payload;
   }catch(e){ storageOK=false; }
   const chip=document.getElementById('sv');
   if(chip)chip.outerHTML=svChip();
 }
+async function saveProfiles(){ try{ await store.set(PROFILES_KEY, JSON.stringify(profiles)); }catch(e){} }
 const svChip=()=>storageOK===false
   ? `<span class="sv bad" id="sv">NOT SAVING — open the file locally</span>`
   : (storageOK===true?`<span class="sv ok" id="sv">SAVED</span>`:`<span class="sv" id="sv">…</span>`);
+
+/* ================= DATES (local time, never UTC) ================= */
 const today=()=>{const d=new Date();
   return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
 const dayDiff=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
-const items=d=>PLAN[d].blocks.flatMap(b=>b.items);
+const fmtLocal=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+/* Monday-based weekday index, 0=Mon .. 6=Sun */
+/* The 7-day block is a ROLLING cycle anchored to the day you started it, not Mon–Sun.
+   Start on a Thursday and that Thursday is D1. */
+const anchor=()=>{ if(!DB.cycleAnchor)DB.cycleAnchor=today(); return DB.cycleAnchor };
+const cycleIdx=ds=>{const n=dayDiff(anchor(),ds); return ((n%7)+7)%7};
+const blockStartOf=ds=>addDays(anchor(), Math.floor(dayDiff(anchor(),ds)/7)*7);
+const addDays=(ds,n)=>{const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+n);return fmtLocal(d)};
+const DOW=["D1","D2","D3","D4","D5","D6","D7"];
 
+/* ================= ACTIVE PLAN ================= */
 let PLAN, BW, STD, QMAP, ALL;
-function setProfilePlan(){
-  PLAN = profile==='sa' ? PLAN_SA : PLAN_NR;
-  BW   = profile==='sa' ? BW_SA   : BW_NR;
-  STD  = profile==='sa' ? STD_SA  : STD_NR;
-  QMAP = profile==='sa' ? QMAP_SA : QMAP_NR;
-  ALL  = [1,2,3].flatMap(d=>items(d));
+const items=d=>PLAN[d].blocks.flatMap(b=>b.items);
+const round5=v=>Math.max(0,Math.round(v/5)*5);
+
+/* Generate a plan for a profile that has no bespoke one, from bodyweight × experience. */
+function genPlan(bw,exp){
+  const e=EXP[exp]||EXP.trained, out={};
+  [1,2,3].forEach(d=>{
+    const src=PLAN_NR[d];
+    out[d]={name:src.name,short:src.short,blocks:src.blocks.map(b=>({t:b.t,items:b.items.map(ex=>{
+      const o={...ex};
+      if(!ex.bw){
+        let w=round5((ex.frac||0)*bw*e.f);
+        if(ex.bar && w<ex.bar) w=ex.bar;       // never prescribe below the empty bar
+        o.w=w;
+      }
+      if(ex.inc) o.inc = e.inc==null ? ex.inc : e.inc;
+      return o;
+    })}))};
+  });
+  return out;
 }
-setProfilePlan();
+function planFor(p){
+  if(p.plan==='nr')return PLAN_NR;
+  if(p.plan==='sa')return PLAN_SA;
+  return genPlan(p.bw,p.exp);
+}
+function stdFor(p){
+  const frac = p.plan==='sa' ? STD_FRAC_SA : STD_FRAC_NR;
+  const out={}; Object.keys(frac).forEach(k=>out[k]=frac[k]*p.bw); return out;
+}
+/* Derive a load for anything that is not part of a bespoke plan
+   (alternates, focus additions, injury substitutes). */
+function deriveW(spec){
+  if(spec.bw)return 0;
+  const e=EXP[profile.exp]||EXP.trained;
+  let w=round5((spec.frac||0)*profile.bw*e.f);
+  if(spec.bar && w<spec.bar)w=spec.bar;
+  return w;
+}
+function mkEx(spec){
+  const e=EXP[profile.exp]||EXP.trained, o={...spec};
+  o.w=deriveW(spec);
+  if(spec.inc)o.inc = e.inc==null ? spec.inc : e.inc;
+  return o;
+}
+function clonePlan(p){
+  const out={};
+  [1,2,3].forEach(d=>{out[d]={name:p[d].name,short:p[d].short,
+    blocks:p[d].blocks.map(b=>({t:b.t,items:b.items.map(x=>({...x}))}))}});
+  return out;
+}
+function findByMatch(plan,match){
+  const m=(match||'').toLowerCase(); if(!m)return null;
+  for(const d of [1,2,3])for(const b of plan[d].blocks)
+    for(const x of b.items) if(x.n.toLowerCase().includes(m))return {d,b,x};
+  return null;
+}
+function appendEx(plan,spec){
+  const found=findByMatch(plan,spec.match);
+  if(found){
+    /* already in the plan — promote it to the primary block rather than duplicating it,
+       so an emphasis movement stops being an afterthought at the end of the session */
+    if(spec.primary && found.d===spec.day){
+      const bs=plan[spec.day].blocks, dest=bs.find(b=>b.t===spec.block);
+      if(dest && dest!==found.b){
+        found.b.items=found.b.items.filter(i=>i!==found.x);
+        found.x.key=1; dest.items.push(found.x);
+      }
+    }
+    return false;
+  }
+  const bs=plan[spec.day].blocks;
+  (bs.find(b=>b.t===spec.block)||bs[bs.length-1]).items.push(mkEx(spec.ex));
+  return true;
+}
+/* Emphasis = two extra sets on the priority pattern. Core is sets-only and stays
+   at the front, one exercise per day rather than inflating every core movement. */
+function applyBump(plan,area){
+  if(area==='core'){
+    [1,2,3].forEach(d=>{
+      for(const b of plan[d].blocks){
+        const x=b.items.find(i=>(metaOf(i.id).p||[]).includes('core'));
+        if(x){x.sets=5;break}
+      }
+    });
+    return;
+  }
+  const f=FOCUS[area]; let target=null;
+  if(f&&f.bump)[1,2,3].forEach(d=>plan[d].blocks.forEach(b=>b.items.forEach(x=>{
+    if(CONCEPT_OF[x.id]===f.bump)target=x })));
+  if(!target){
+    const hits=[];
+    [1,2,3].forEach(d=>plan[d].blocks.forEach(b=>b.items.forEach(x=>{
+      if((metaOf(x.id).p||[]).includes(area))hits.push(x)})));
+    target=hits[hits.length-1];
+  }
+  if(target)target.sets=(target.sets||3)+2;
+}
+function idsForInjury(key,plan){
+  const def=INJURIES[key]; if(!def)return[];
+  const out=[];
+  [1,2,3].forEach(d=>plan[d].blocks.forEach(b=>b.items.forEach(x=>{
+    if((metaOf(x.id).load||[]).some(l=>def.loads.includes(l)))out.push(x.id)})));
+  return [...new Set(out)];
+}
+const injuredIds=()=>{const s=new Set();
+  (DB.injuries||[]).forEach(i=>(i.ids||[]).forEach(id=>s.add(id)));return s};
+
+let ALT_OF={};
+function setActivePlan(){
+  BW   = profile.bw;
+  STD  = stdFor(profile);
+  QMAP = profile.plan==='sa' ? QMAP_SA : QMAP_NR;
+  const base=clonePlan(planFor(profile));
+
+  /* injury substitutes first, so emphasis can still bump one if it wants to */
+  (DB.injuries||[]).forEach(i=>{
+    const def=INJURIES[i.key]; if(def)def.subs.forEach(s=>appendEx(base,s));
+  });
+  const f=DB.focus&&FOCUS[DB.focus];
+  if(f){ f.add.forEach(s=>appendEx(base,s)); applyBump(base,DB.focus); }
+
+  const inj=injuredIds();
+  [1,2,3].forEach(d=>base[d].blocks.forEach(b=>b.items.forEach(x=>{
+    if(inj.has(x.id))x.injured=1})));
+  PLAN=base;
+
+  /* ALL carries the alternates too, so a swapped lift resolves in history,
+     progression and the session summary exactly like a planned one. */
+  const list=[1,2,3].flatMap(d=>items(d));
+  const alts=[];
+  list.forEach(x=>(metaOf(x.id).alts||[]).forEach(a=>{
+    if(!alts.some(y=>y.id===a.id))alts.push(mkEx({...a,r:x.r}))}));
+  ALL=list.concat(alts);
+  ALT_OF={};
+  list.forEach(x=>{ALT_OF[x.id]=(metaOf(x.id).alts||[])
+    .map(a=>alts.find(y=>y.id===a.id)).filter(Boolean)});
+}
+
+/* ================= VOLUME ACCOUNTING ================= */
+function weekDays(){
+  const w=weekArr(), out=[];
+  w.forEach((t,i)=>{if(t==='strength'){const d=slotDay(i);if(d)out.push(d)}});
+  return out;
+}
+/* Weekly sets per area. Injured exercises count as zero — that is the whole point:
+   a hold nobody notices is a hole in the week, not a lift that is merely frozen. */
+function setsForPlan(planObj,skip){
+  const inj=injuredIds(), acc={}; AREAS.forEach(a=>acc[a]=0);
+  weekDays().forEach(d=>planObj[d].blocks.forEach(b=>b.items.forEach(ex=>{
+    if((skip&&skip.has(ex.id))||inj.has(ex.id))return;
+    const m=metaOf(ex.id), n=ex.sets||3;
+    (m.p||[]).forEach(a=>{if(acc[a]!=null)acc[a]+=n});
+    (m.s||[]).forEach(a=>{if(acc[a]!=null)acc[a]+=n/2});
+  })));
+  return acc;
+}
+const weeklySets=extraSkip=>setsForPlan(PLAN,new Set(extraSkip||[]));
+/* the week as it would be with NO emphasis applied — what the diagnosis reports */
+function baselineSets(){
+  const base=clonePlan(planFor(profile));
+  (DB.injuries||[]).forEach(i=>{const def=INJURIES[i.key]; if(def)def.subs.forEach(sp=>appendEx(base,sp))});
+  return setsForPlan(base,null);
+}
+function patternsLost(ids){
+  const skip=new Set(ids||[]), inj=injuredIds(), all={}, live={};
+  weekDays().forEach(d=>PLAN[d].blocks.forEach(b=>b.items.forEach(ex=>{
+    const p=metaOf(ex.id).pat; if(!p)return;
+    all[p]=(all[p]||0)+1;
+    if(!skip.has(ex.id)&&!inj.has(ex.id))live[p]=(live[p]||0)+1;
+  })));
+  return Object.keys(all).filter(p=>!live[p]);
+}
+const fmtSets=v=>Number.isInteger(v)?String(v):v.toFixed(1);
+/* What a hold would cost, stated before it is applied. */
+function costOf(ids){
+  const before=weeklySets([]), after=weeklySets(ids);
+  const drops=AREAS.filter(a=>after[a]<before[a]-.01)
+    .map(a=>({area:a,from:before[a],to:after[a]}))
+    .sort((x,y)=>(x.to-x.from)-(y.to-y.from));
+  return {drops, lost:patternsLost(ids)};
+}
+function costHTML(key,ids){
+  const c=costOf(ids), def=INJURIES[key];
+  if(!ids.length)return `<div class="cost">Nothing in your current week loads that, so nothing changes.</div>`;
+  const lostTxt=c.lost.length
+    ? `Holding these removes your only <b>${c.lost.map(p=>PAT_LABEL[p]||p).join('</b> and <b>')}</b>. `
+    : '';
+  const dropTxt=c.drops.length
+    ? c.drops.slice(0,3).map(d=>`${d.area} ${fmtSets(d.from)} → <b>${fmtSets(d.to)}</b>`).join(', ')+' sets/week.'
+    : 'No area loses volume.';
+  return `<div class="cost">${lostTxt}${dropTxt}<br><br>${def.why}</div>`;
+}
+
+/* ================= ACCENT ================= */
+const INK=[15,21,24], BLACK=[0,0,0], WHITE=[255,255,255];
+function hex2rgb(h){h=(h||'#43A177').replace('#','');
+  if(h.length===3)h=h.split('').map(c=>c+c).join('');
+  return [parseInt(h.slice(0,2),16)||0,parseInt(h.slice(2,4),16)||0,parseInt(h.slice(4,6),16)||0]}
+const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+const rgb2hex=r=>'#'+r.map(v=>Math.max(0,Math.min(255,v)).toString(16).padStart(2,'0')).join('');
+function applyAccent(){
+  const c=hex2rgb(profile&&profile.accent), s=document.body.style;
+  s.setProperty('--accent', rgb2hex(c));
+  s.setProperty('--accentText', rgb2hex(mix(c,BLACK,.88)));
+  s.setProperty('--accentDim', rgb2hex(mix(c,INK,.78)));
+  s.setProperty('--accentBright', rgb2hex(mix(c,WHITE,.35)));
+  s.setProperty('--accentBorder', rgb2hex(mix(c,INK,.55)));
+  s.setProperty('--accentGradA', rgb2hex(mix(c,INK,.86)));
+  s.setProperty('--accentGlow', `rgba(${c[0]},${c[1]},${c[2]},.2)`);
+}
 
 const wOf=ex=>DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;
 const lastOf=id=>{for(let i=DB.history.length-1;i>=0;i--){const e=DB.history[i].entries[id];
@@ -406,26 +910,49 @@ function openVid(ex){
   catch(e){toast('Open the file locally to use video links')}
 }
 
-/* ================= REST-DAY GATE ================= */
+/* ================= WEEK / CARDIO ================= */
+const weekArr=()=>{ if(!DB.week||DB.week.length!==7)DB.week=[...WEEK_DEFAULT]; return DB.week };
+/* The k-th strength slot of the week maps to rotation day (k%3)+1. */
+function slotDay(i){
+  const w=weekArr(), s=[]; w.forEach((t,j)=>{if(t==='strength')s.push(j)});
+  const pos=s.indexOf(i); return pos<0?null:(pos%3)+1;
+}
+function cardioMins(ds){ return (DB.cardio||[]).filter(c=>c.date===ds).reduce((a,c)=>a+(c.mins||0),0) }
+function cardioDone(ds){ return (DB.cardio||[]).some(c=>c.date===ds) }
+function cycleMinutes(ref){
+  const ws=blockStartOf(ref||today()), we=addDays(ws,6);
+  return (DB.cardio||[]).filter(c=>c.date>=ws&&c.date<=we).reduce((a,c)=>a+(c.mins||0),0);
+}
+/* Suggest a modality from what was trained YESTERDAY. */
+function cardioSuggestion(){
+  const y=addDays(today(),-1);
+  const s=DB.history.filter(h=>h.date===y).pop();
+  if(s&&s.day===2)return "Legs are already cooked from yesterday — keep it a <b>flat walk</b>. No incline, no hills.";
+  if(s)return "You lifted upper body yesterday, so legs are fresh — <b>incline treadmill, bike, or a walk</b> all work.";
+  return "Nothing logged yesterday — <b>incline treadmill, bike, or a walk</b>, whatever you'll actually do.";
+}
+
+/* ================= REST-DAY GATE =================
+   Only STRENGTH sessions live in DB.history; zone 2 is kept in DB.cardio and is
+   deliberately invisible to this gate. A walk yesterday is not a reason to skip lifting. */
 function gate(){
   const last=DB.history[DB.history.length-1];
   if(!last)return{ok:1,msg:"First session. Nothing logged yet."};
   const gap=dayDiff(last.date,today());
   if(gap===0)return{ok:0,hard:0,msg:`You already trained <b>${PLAN[last.day].name}</b> today. Two sessions in one day is not more progress, it is less recovery — only override to catch up a missed log.`};
   if(gap===1)return{ok:0,hard:0,msg:`You trained <b>${PLAN[last.day].name}</b> yesterday. At 3 days a week the plan wants a rest day in between.`};
-  return{ok:1,msg:`Last session: <b>${PLAN[last.day].name}</b>, ${gap} days ago.`};
+  return{ok:1,msg:`Last strength session: <b>${PLAN[last.day].name}</b>, ${gap} days ago.`};
 }
 function nextDay(){
   const last=DB.history[DB.history.length-1];
   return last?(last.day%3)+1:1;
 }
-/* Days completed in the CURRENT cycle. Resets once all 3 are done. */
 function cycleDone(){
   let set=new Set();
   DB.history.forEach(h=>{ set.add(h.day); if(set.size===3) set=new Set(); });
   return set;
 }
-/* Menstrual-cycle day tracking (SA only) — log only, never used to alter prescription. */
+/* Menstrual-cycle day — logged only, never used to alter any prescription. */
 function cycleDayNum(){
   if(!DB.cycleStarts||!DB.cycleStarts.length)return null;
   const last=[...DB.cycleStarts].sort().slice(-1)[0];
@@ -433,48 +960,100 @@ function cycleDayNum(){
 }
 
 /* ================= RENDER ================= */
-function renderAvatar(){
-  document.body.classList.toggle('theme-sa', profile==='sa');
+function renderProfileBar(){
+  applyAccent();
   const btn=document.getElementById('avatarBtn');
-  if(btn){ btn.textContent=profile==='sa'?'SA':'NR'; btn.classList.toggle('sa',profile==='sa'); }
-  document.querySelectorAll('.swopt').forEach(o=>o.classList.toggle('active',o.dataset.p===profile));
+  if(btn)btn.textContent=profile.initials;
+  const nm=document.getElementById('pName');
+  if(nm)nm.textContent=profile.name;
+  const cdEl=document.getElementById('cycleDay');
+  if(cdEl){
+    const cd = profile.cycle ? cycleDayNum() : null;
+    cdEl.textContent = cd!=null ? `cycle day ${cd}` : '';
+  }
+  const sw=document.getElementById('switcher');
+  if(sw && !sw.hidden) sw.innerHTML=switcherHTML();
+}
+function switcherHTML(){
+  return profiles.map(p=>`<button class="swopt ${p.id===profile.id?'active':''}" data-p="${p.id}">
+      <span class="ini" style="background:${p.accent}">${p.initials}</span>${p.name}</button>`).join('')
+    +`<button class="swadd" data-addp="1">+ ADD PROFILE</button>`;
+}
+function renderWeek(){
+  const W=document.getElementById('week');
+  const w=weekArr(), td=today(), tdow=cycleIdx(td), done=cycleDone();
+  W.innerHTML=w.map((t,i)=>{
+    const d=slotDay(i);
+    const lbl = t==='strength' ? (d?PLAN[d].short:'—') : (t==='easy'?'Z2':'REST');
+    const on = viewMode!=='history' && i===viewSlot;
+    const cls=['wd'];
+    if(on)cls.push('on');
+    if(i===tdow)cls.push('today');
+    if(t==='rest')cls.push('rest');
+    if(t==='strength'&&d&&done.has(d))cls.push('done');
+    return `<button class="${cls.join(' ')}" data-slot="${i}">${DOW[i]}<small>${lbl}</small></button>`;
+  }).join('');
+  const hb=document.getElementById('histBtn');
+  if(hb)hb.classList.toggle('on',viewMode==='history');
+}
+function daySelector(){
+  const w=weekArr(), cur=w[viewSlot];
+  const opt=(k,l)=>`<button data-state="${k}" class="${cur===k?'on':''}">${l}</button>`;
+  return `<div class="daysel">${opt('strength','STRENGTH')}${opt('easy','EASY MOVEMENT')}${opt('rest','REST')}</div>`;
 }
 function render(){
   const S=document.getElementById('sess'), L=document.getElementById('list');
-  renderAvatar();
-  const cdEl=document.getElementById('cycleDay');
-  if(cdEl){
-    const cd = profile==='sa' ? cycleDayNum() : null;
-    cdEl.textContent = cd!=null ? `cycle day ${cd}` : '';
-  }
-  const done=cycleDone(), sugD=nextDay();
-  document.querySelectorAll('.tab').forEach(t=>{
-    t.classList.toggle('on',t.dataset.d==String(view));
-    const d=+t.dataset.d;
-    t.classList.toggle('done', t.dataset.d!=='h' && done.has(d));
-    t.classList.toggle('next', t.dataset.d!=='h' && !done.has(d) && d===sugD);
-  });
-  if(view==='h'){S.innerHTML='';L.innerHTML=history();return}
-  S.innerHTML=sessBox();wire();
+  renderProfileBar(); renderWeek();
+  if(setupOpen){ S.innerHTML=setupBox(); L.innerHTML=''; wireSetup(); return }
+  if(viewMode==='history'){ S.innerHTML=''; L.innerHTML=history(); return }
+  if(viewMode==='easy'){ S.innerHTML=nagHTML()+daySelector()+cardioBox(); L.innerHTML=''; wireDay(); wireCardio(); return }
+  if(viewMode==='rest'){ S.innerHTML=nagHTML()+daySelector()+restBox(); L.innerHTML=''; wireDay(); return }
+  S.innerHTML=nagHTML()+daySelector()+sessBox(); wireDay(); wire();
   L.innerHTML='';
   const A=DB.active, live=A&&A.day===view;
   PLAN[view].blocks.forEach(b=>{
     if(live && A.lowEnergy && b.t==='Isolation') return;
     const h=document.createElement('div');h.className='blk';
     h.innerHTML=`<span>${b.t}</span><i></i>`;L.appendChild(h);
-    b.items.forEach(ex=>L.appendChild(card(ex)));
+    b.items.forEach(ex=>{
+      const to = live && A.swaps && A.swaps[ex.id];
+      const shown = to ? (ALL.find(x=>x.id===to)||ex) : ex;
+      L.appendChild(card(shown,ex));
+    });
   });
+}
+
+function restBox(){
+  return `<div class="sess"><div class="st"><span class="dot"></span><b>Rest day</b>${svChip()}</div>
+    <p>Nothing scheduled. Rest is the part of the plan that makes the other days work —
+    it is not a day you failed to train.</p></div>`;
+}
+function cardioBox(){
+  const td=today(), mins=cycleMinutes(), pct=Math.min(100,Math.round(mins/CARDIO_TARGET*100));
+  const doneToday=cardioDone(td), todayMins=cardioMins(td);
+  return `<div class="sess ${doneToday?'live':''}">
+    <div class="st"><span class="dot ${doneToday?'go':''}"></span><b>Easy movement · zone 2</b>${svChip()}</div>
+    <div class="z2"><b>Zone 2</b> is nose-breathing pace — you can hold a conversation the whole time,
+      roughly 60–70% of max heart rate. Most people go too hard here; if you are out of breath, slow down.</div>
+    <p>${cardioSuggestion()}</p>
+    <div class="cardiorow">
+      <div class="fld"><label>MINUTES</label>
+        <input type="number" inputmode="numeric" id="cMins" value="${todayMins||''}" placeholder="30"></div>
+      <button class="big" id="cLog" style="flex:1">${doneToday?'UPDATE':'LOG MOVEMENT'}</button>
+    </div>
+    <div class="weekbar"><span style="width:${pct}%"></span></div>
+    <div class="weekno">${mins} / ${CARDIO_TARGET} min this cycle${mins>=CARDIO_TARGET?' · target met':''}</div>
+    ${doneToday?`<button class="anyway" id="cUndo">REMOVE TODAY'S ENTRY</button>`:''}
+  </div>`;
 }
 
 function sessBox(){
   const A=DB.active;
-  const isSA = profile==='sa';
-  const cycleHtml = isSA ? `<button class="cyclebtn" id="cycleBtn">PERIOD STARTED TODAY</button>` : '';
+  const cycleHtml = profile.cycle ? `<button class="cyclebtn" id="cycleBtn">PERIOD STARTED TODAY</button>` : '';
   if(A&&A.day===view){
     const n=Object.keys(A.entries).length, tot=items(view).length;
-    let vol=0;Object.entries(A.entries).forEach(([id,e])=>{const m=(ALL.find(x=>x.id===id)||{}).mult||1;
-      e.reps.forEach(r=>vol+=r*(e.w||0)*m)});
-    const loweHtml = isSA?`<button class="lowe ${A.lowEnergy?'on':''}" id="lowEnergyBtn">LOW ENERGY DAY${A.lowEnergy?' · ON':''}</button>`:'';
+    let vol=0;Object.entries(A.entries).forEach(([id,e])=>{vol+=volOf(id,e.w,e.reps)});
+    const loweHtml = profile.lowEnergy?`<button class="lowe ${A.lowEnergy?'on':''}" id="lowEnergyBtn">LOW ENERGY DAY${A.lowEnergy?' · ON':''}</button>`:'';
     return `<div class="sess live">
       <div class="st"><span class="dot go"></span><b>Session in progress · ${PLAN[view].name}</b>${svChip()}</div>
       <div class="live-stats">
@@ -492,7 +1071,7 @@ function sessBox(){
   const last=DB.history[DB.history.length-1];
   const canReopen=last&&last.date===today()&&last.day===view;
   const cls=g.ok?'':'rest';
-  const loweHtmlPre = isSA?`<button class="lowe ${preLowEnergy?'on':''}" id="lowEnergyBtn">LOW ENERGY DAY${preLowEnergy?' · ON':''}</button>`:'';
+  const loweHtmlPre = profile.lowEnergy?`<button class="lowe ${preLowEnergy?'on':''}" id="lowEnergyBtn">LOW ENERGY DAY${preLowEnergy?' · ON':''}</button>`:'';
   return `<div class="sess ${cls}">
     <div class="st"><span class="dot ${g.ok?'go':'no'}"></span><b>${g.ok?'Ready':'Rest day'}</b></div>
     <p>${g.msg}${g.ok&&sug!==view?` Up next in the rotation: <b>${PLAN[sug].name}</b>.`:''}</p>
@@ -503,16 +1082,28 @@ function sessBox(){
     ${loweHtmlPre}${cycleHtml}</div>`;
 }
 
-function card(ex){
+function card(ex,orig){
+  orig=orig||ex;
   const A=DB.active, live=A&&A.day===view;
   const entry=live?A.entries[ex.id]:null;
   const lowE = !!(live && A.lowEnergy);
+  const swapped = live && A.swaps && A.swaps[orig.id];
   const el=document.createElement('div');
-  el.className='ex'+(ex.key?' key':'')+(entry?' done':'')+(live?'':' idle');
+  el.className='ex'+(ex.key||orig.key?' key':'')+(entry?' done':'')+(live?'':' idle')+(orig.injured?' inj':'');
   const w=entry?entry.w:(lowE?loEnergyW(ex,wOf(ex)):wOf(ex));
-  const setCount = lowE?2:3;
+  const setCount = lowE?2:(orig.sets||3);
+  const alts = ALT_OF[orig.id]||[];
+  const altBtn = alts.length
+    ? `<button class="altbtn ${altOpen===orig.id?'on':''}" data-alt="${orig.id}" title="Alternate exercises">ALT</button>`
+    : '';
+  const altList = (altOpen===orig.id)?`<div class="altlist">
+      <button class="${!swapped?'cur':''}" data-swap="${orig.id}" data-to="">${orig.n}</button>
+      ${alts.map(a=>`<button class="${swapped===a.id?'cur':''}" data-swap="${orig.id}" data-to="${a.id}">${a.n}</button>`).join('')}
+    </div>`:'';
   el.innerHTML=`
-   <div class="top"><h3>${ex.n}${badge(ex)}</h3><div class="tgt">${setCount} × ${ex.r}</div>${vid(ex)}</div>
+   <div class="top"><h3>${ex.n}${badge(ex)}</h3><div class="tgt">${setCount} × ${ex.r}</div>${altBtn}${vid(ex)}</div>
+   ${altList}
+   ${swapped?`<div class="ft"><span class="swapped">SWAPPED FOR THIS SESSION · logs to its own history</span></div>`:''}
    <div class="row">
      <div class="fld"><label>${ex.bw?'ADDED LB':(ex.mult?'LB PINNED':(ex.plates?'LB PLATES':'LB'+(ex.each?' EACH':'')))}</label>
        <input type="number" inputmode="decimal" id="w_${ex.id}" value="${w||''}" ${live?'':'disabled'}></div>
@@ -545,7 +1136,19 @@ function card(ex){
     if(!confirm(`Release the injury hold on ${ex.n}? Progression starts again next time you close a session.`))return;
     delete DB.holds[ex.id];save();render();toast(`${ex.n} back on progression`);
   });
-  el.querySelector('[data-log]').addEventListener('click',()=>logEx(ex));
+  const ab=el.querySelector('[data-alt]');
+  if(ab)ab.addEventListener('click',()=>{
+    altOpen = altOpen===orig.id ? null : orig.id; render();
+  });
+  el.querySelectorAll('[data-swap]').forEach(b=>b.addEventListener('click',()=>{
+    if(!(DB.active&&DB.active.day===view)){toast('Start the session first');return}
+    DB.active.swaps=DB.active.swaps||{};
+    const to=b.dataset.to;
+    if(to) DB.active.swaps[orig.id]=to; else delete DB.active.swaps[orig.id];
+    altOpen=null; save(); render();
+    toast(to?`Swapped to ${(ALL.find(x=>x.id===to)||{}).n} for this session`:`Back to ${orig.n}`);
+  }));
+  el.querySelector('[data-log]').addEventListener('click',()=>logEx(ex,orig));
   return el;
 }
 function badgeLive(ex,w){const s=STD[ex.id];if(!s)return badge(ex);
@@ -555,17 +1158,216 @@ function badgeLive(ex,w){const s=STD[ex.id];if(!s)return badge(ex);
   return `<span class="badge b1">NEEDS BOOST</span>`}
 
 function foot(ex){
-  const held=DB.holds&&DB.holds[ex.id];
-  const holdUI=held?`<span class="hold">HOLD · injury, weight frozen</span>
-    <button class="release" data-rel="${ex.id}">RELEASE</button>`:'';
+  const held=DB.holds&&DB.holds[ex.id], flagged=injuredIds().has(ex.id);
+  /* an exercise held by an injury FLAG is released from the flag, not one lift at a time */
+  const holdUI=flagged
+    ? `<span class="hold">INJURY · not counted in weekly volume</span>`
+    : (held?`<span class="hold">HOLD · injury, weight frozen</span>
+        <button class="release" data-rel="${ex.id}">RELEASE</button>`:'');
   const l=lastOf(ex.id);if(!l)return holdUI+`<span class="pill">no history yet</span>`;
-  const hit=l.reps.length===3&&l.reps.every(r=>r>=ex.r);
+  /* a 2-set low-energy entry never earns the up-arrow, since progression was frozen */
+  const hit=l.reps.length>=3&&l.reps.every(r=>r>=ex.r);
   return holdUI+`<span class="pill">last ${l.date.slice(5)} · ${l.w||'BW'} × ${l.reps.join('/')}</span>`
    +(held?'':(hit?`<span class="pill up">↑ now ${wOf(ex)} lb</span>`
-        :`<span class="pill hold">hold ${wOf(ex)} until 3 × ${ex.r}</span>`));
+        :`<span class="pill hold">hold ${wOf(ex)} until ${ex.sets||3} × ${ex.r}</span>`));
+}
+
+/* ================= FOCUS / INJURY PANELS ================= */
+function focusPanel(){
+  const cur=DB.focus, sets=weeklySets([]);
+  const btns=Object.keys(FOCUS).map(k=>
+    `<button data-focus="${k}" class="${cur===k?'on':''}">${FOCUS[k].label}</button>`).join('');
+  let dx='';
+  if(cur&&FOCUS[cur]){
+    const f=FOCUS[cur], was=baselineSets()[cur]||0, now=sets[cur]||0;
+    const pct=Math.min(100,Math.round(was/f.target*100));
+    const gap = was>=f.target
+      ? `Without emphasis you were already at <b>${fmtSets(was)}</b> sets a week, at or above the <b>${f.target}</b> most people need. More is optional, not a fix.`
+      : `Without emphasis you were at <b>${fmtSets(was)}</b> sets a week against a target of <b>${f.target}</b> — short by <b>${fmtSets(f.target-was)}</b>.`;
+    const now_ = now!==was ? `<br><br>Emphasis takes it to <b>${fmtSets(now)}</b>.` : '';
+    dx=`<div class="dx"><div class="dxbar"><span style="width:${pct}%"></span></div>${gap}${now_}<br><br>${f.note}</div>`;
+  }
+  return `<div class="setup">
+    <div class="st" style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+      <b style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.13em">FOCUS AREA</b></div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:4px">
+      One at a time. Emphasis only ever <b style="color:var(--bone)">adds</b> sets — nothing is dropped from the base plan to make room.</p>
+    <div class="fsel"><button data-focus="" class="${cur?'':'on'}">NONE</button>${btns}</div>
+    ${dx}</div>`;
+}
+function cyclePanel(){
+  const td=today(), i=cycleIdx(td), bs=blockStartOf(td);
+  return `<div class="setup">
+    <div class="st" style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+      <b style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.13em">PLAN CYCLE</b></div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:4px">
+      The seven days are a rolling cycle, not Monday to Sunday. Today is <b style="color:var(--bone)">${DOW[i]}</b>,
+      and the current block started ${bs}. Restart it whenever you want D1 to be today.</p>
+    <button class="swadd" id="cycReset" style="width:100%;margin-top:8px">RESTART CYCLE — D1 = TODAY</button>
+  </div>`;
+}
+function injuryPanel(){
+  const act=DB.injuries||[];
+  const btns=Object.keys(INJURIES).map(k=>{
+    const on=act.some(i=>i.key===k);
+    return `<button data-inj="${k}" class="${on?'on':''}">${INJURIES[k].label}</button>`;
+  }).join('');
+  const detail=act.map(i=>{
+    const def=INJURIES[i.key]; if(!def)return '';
+    const age=dayDiff(i.since,today()), c=i.cost||{drops:[],lost:[]};
+    const lostTxt=(c.lost&&c.lost.length)
+      ? `Removed your only <b>${c.lost.map(p=>PAT_LABEL[p]||p).join('</b> and <b>')}</b>. ` : '';
+    const dropTxt=(c.drops&&c.drops.length)
+      ? c.drops.slice(0,3).map(d=>`${d.area} ${fmtSets(d.from)} → <b>${fmtSets(d.to)}</b>`).join(', ')+' sets/week.'
+      : 'No area lost volume.';
+    return `<div class="cost"><b>${def.label}</b> · flagged ${age} day${age===1?'':'s'} ago, holding ${i.ids.length} exercise${i.ids.length===1?'':'s'}.<br><br>
+      ${lostTxt}${dropTxt}<br><br>${def.why}
+      <div class="ebtns"><button class="mini del" data-injrel="${i.key}">RELEASE ${def.label}</button></div></div>`;
+  }).join('');
+  return `<div class="setup">
+    <div class="st" style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
+      <b style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.13em">INJURY</b></div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:4px">
+      Flag what hurts. The app works out which exercises it rules out, what that costs you in weekly sets, and what to do instead.</p>
+    <div class="fsel">${btns}</div>
+    ${detail}</div>`;
+}
+function nagHTML(){
+  const old=(DB.injuries||[]).filter(i=>dayDiff(i.snooze||i.since,today())>=NAG_DAYS);
+  if(!old.length)return '';
+  return old.map(i=>{
+    const def=INJURIES[i.key]; if(!def)return '';
+    const age=dayDiff(i.since,today());
+    return `<div class="nag">You flagged <b>${def.label}</b> ${age} days ago and it is still holding
+      ${i.ids.length} exercise${i.ids.length===1?'':'s'}. A hold nobody lifts becomes permanent by accident — is it still needed?
+      <div class="ebtns"><button class="mini" data-nagkeep="${i.key}">STILL NEEDED</button>
+      <button class="mini del" data-injrel="${i.key}">RELEASE IT</button></div></div>`;
+  }).join('');
+}
+function applyInjury(key){
+  if(!INJURIES[key]||(DB.injuries||[]).some(i=>i.key===key))return;
+  const ids=idsForInjury(key,PLAN);
+  const c=costOf(ids);                     // measured while they still count as trained
+  const added=ids.filter(id=>!DB.holds[id]);   // never clobber a pre-existing manual hold
+  DB.injuries=DB.injuries||[];
+  DB.injuries.push({key,since:today(),ids,added,cost:c});
+  ids.forEach(id=>{DB.holds[id]=1});
+  setActivePlan(); save(); render();
+  toast(ids.length?`${INJURIES[key].label} flagged · ${ids.length} exercise${ids.length===1?'':'s'} held`
+                 : `${INJURIES[key].label} flagged · nothing in your week loads that`);
+}
+function releaseInjury(key){
+  const rec=(DB.injuries||[]).find(i=>i.key===key); if(!rec)return;
+  DB.injuries=(DB.injuries||[]).filter(i=>i.key!==key);
+  const still=injuredIds();
+  (rec.added||rec.ids||[]).forEach(id=>{ if(!still.has(id)) delete DB.holds[id]; });
+  setActivePlan(); save(); render();
+  toast(`${INJURIES[key].label} released · progression resumes`);
+}
+
+/* ================= SETUP ================= */
+function setupBox(){
+  const rows=profiles.map(p=>`<div class="pf" data-pf="${p.id}">
+    <div class="pfg">
+      <div><label>NAME</label><input data-f="name" value="${p.name}"></div>
+      <div><label>INITIALS</label><input data-f="initials" maxlength="2" value="${p.initials}"></div>
+      <div><label>BODYWEIGHT LB</label><input data-f="bw" type="number" inputmode="numeric" value="${p.bw}"></div>
+      <div><label>ACCENT</label><input data-f="accent" type="color" value="${p.accent}"></div>
+      <div style="grid-column:1/3"><label>EXPERIENCE</label><select data-f="exp">
+        ${Object.keys(EXP).map(k=>`<option value="${k}" ${p.exp===k?'selected':''}>${EXP[k].label}</option>`).join('')}
+      </select></div>
+    </div>
+    <div class="chkrow">
+      <label><input type="checkbox" data-f="lowEnergy" ${p.lowEnergy?'checked':''}> Low energy day button</label>
+      <label><input type="checkbox" data-f="cycle" ${p.cycle?'checked':''}> Cycle logging</label>
+    </div>
+    <div class="ebtns">
+      <button class="mini" data-psave="${p.id}">SAVE</button>
+      ${profiles.length>1?`<button class="mini del" data-pdel="${p.id}">REMOVE</button>`:''}
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:8px">${p.plan==='gen'
+      ? 'Starting loads generated from bodyweight × experience. Weights you have already logged are never overwritten.'
+      : 'Existing plan — your logged weights drive this, bodyweight only affects the strength badges.'}</p>
+  </div>`).join('');
+  return `<div class="setup">
+    <div class="st" style="display:flex;align-items:center;gap:9px;margin-bottom:11px">
+      <b style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.13em">PROFILES</b>${svChip()}</div>
+    ${rows}
+    <button class="swadd" data-addp="1" style="width:100%;margin-top:12px">+ ADD PROFILE</button>
+  </div>`
+  + cyclePanel() + focusPanel() + injuryPanel()
+  + `<div class="setup"><button class="anyway" id="setupClose">CLOSE SETUP</button></div>`;
+}
+function wireSetup(){
+  document.querySelectorAll('[data-psave]').forEach(b=>b.addEventListener('click',async()=>{
+    const box=b.closest('[data-pf]'), id=box.dataset.pf, p=profiles.find(x=>x.id===id);
+    if(!p)return;
+    const g=f=>box.querySelector(`[data-f="${f}"]`);
+    p.name=(g('name').value||'Unnamed').trim();
+    p.initials=((g('initials').value||p.name.slice(0,2)).trim().toUpperCase()||'??').slice(0,2);
+    p.bw=Math.max(1,+g('bw').value||p.bw);
+    p.accent=g('accent').value||p.accent;
+    p.exp=g('exp').value;
+    p.lowEnergy=g('lowEnergy').checked;
+    p.cycle=g('cycle').checked;
+    await saveProfiles();
+    if(p.id===profile.id){ profile=p; setActivePlan(); }
+    render(); toast(`${p.name} saved`);
+  }));
+  document.querySelectorAll('[data-pdel]').forEach(b=>b.addEventListener('click',async()=>{
+    const id=b.dataset.pdel, p=profiles.find(x=>x.id===id);
+    if(profiles.length<2){toast('You need at least one profile');return}
+    if(!confirm(`Remove ${p.name} from the switcher? Their saved training data is kept on this device, not deleted.`))return;
+    profiles=profiles.filter(x=>x.id!==id);
+    await saveProfiles();
+    if(profile.id===id){ await activateProfile(profiles[0].id); }
+    render(); toast(`${p.name} removed · data kept`);
+  }));
+  const cr=document.getElementById('cycReset');
+  if(cr)cr.addEventListener('click',()=>{
+    if(!confirm('Restart the cycle so that today becomes D1? Your logged history is untouched.'))return;
+    DB.cycleAnchor=today(); setViewFromSlot(0); save(); render(); toast('Cycle restarted — today is D1');
+  });
+  const c=document.getElementById('setupClose');
+  if(c)c.addEventListener('click',()=>{setupOpen=false;render()});
+}
+async function addProfile(){
+  const p={id:newId(),name:"New lifter",initials:"NL",accent:"#69AEE8",bw:170,exp:"new",
+           plan:"gen",lowEnergy:true,cycle:false};
+  profiles.push(p);
+  await saveProfiles();
+  await store.set(keyFor(p.id), JSON.stringify(defaultDB('gen')));
+  closeSwitcher(); setupOpen=true;
+  await activateProfile(p.id);
+  toast('Profile added — set name, bodyweight and level');
 }
 
 /* ================= ACTIONS ================= */
+function wireDay(){
+  document.querySelectorAll('[data-state]').forEach(b=>b.addEventListener('click',()=>{
+    const w=weekArr(), s=b.dataset.state;
+    if(w[viewSlot]===s)return;
+    w[viewSlot]=s; save();
+    setViewFromSlot(viewSlot); render();
+    toast(`${DOW[viewSlot]} set to ${s==='strength'?'strength':s==='easy'?'easy movement':'rest'}`);
+  }));
+}
+function wireCardio(){
+  const b=document.getElementById('cLog');
+  if(b)b.addEventListener('click',()=>{
+    const td=today(), m=Math.max(0,+((document.getElementById('cMins')||{}).value||0));
+    DB.cardio=(DB.cardio||[]).filter(c=>c.date!==td);
+    DB.cardio.push({date:td,mins:m});
+    save();render();
+    toast(m?`Logged ${m} min · ${cycleMinutes()} / ${CARDIO_TARGET} this cycle`:'Movement logged');
+  });
+  const u=document.getElementById('cUndo');
+  if(u)u.addEventListener('click',()=>{
+    const td=today();
+    DB.cardio=(DB.cardio||[]).filter(c=>c.date!==td);
+    save();render();toast('Entry removed');
+  });
+}
 function wire(){
   const s=document.getElementById('start');
   if(s)s.addEventListener('click',()=>{if(gate().ok)begin();else toast('Rest day — see the note above')});
@@ -595,9 +1397,9 @@ function begin(){
   preLowEnergy=false;
   save();render();toast(`${PLAN[view].name} started`);
 }
-function logEx(ex){
+function logEx(ex,orig){
   if(!(DB.active&&DB.active.day===view)){toast('Start the session first');return}
-  const A=DB.active, setCount=A.lowEnergy?2:3;
+  const A=DB.active, setCount=A.lowEnergy?2:((orig||ex).sets||3);
   const reps=[...Array(setCount).keys()].map(i=>document.querySelector(`[data-s="${ex.id}"][data-i="${i}"]`).value)
     .map(v=>v===''?null:+v);
   if(reps.some(r=>r==null)){toast(`Fill all ${setCount} sets`);return}
@@ -610,27 +1412,26 @@ function reopen(){
   const last=DB.history[DB.history.length-1];
   if(!last||last.date!==today()){toast('Nothing to reopen');return}
   DB.history.pop();
-  // roll the progression back to what was actually lifted
   Object.entries(last.entries).forEach(([id,e])=>{DB.next[id]=e.w});
   DB.active={day:last.day,date:last.date,started:Date.now(),entries:last.entries,lowEnergy:!!last.lowEnergy};
   view=last.day;save();render();window.scrollTo({top:0});
   toast(`${PLAN[last.day].name} reopened — finish and close it again`);
 }
-
 function endSession(){
   const A=DB.active, ids=Object.keys(A.entries);
   if(!ids.length){toast('Nothing logged yet');return}
   let ups=[];
   ids.forEach(id=>{
-    const ex=ALL.find(x=>x.id===id), e=A.entries[id];
+    const ex=exById(id), e=A.entries[id];
+    if(!ex)return;
     const hit=e.reps.length>0&&e.reps.every(r=>r>=ex.r);
-    const held=(DB.holds&&DB.holds[id])||A.lowEnergy;   // low-energy sessions freeze progression too
-    DB.next[id]=(hit&&ex.inc&&!held)?e.w+ex.inc:e.w;   // applied ONCE, here
+    const held=(DB.holds&&DB.holds[id])||A.lowEnergy;   // low-energy freezes progression, same as a hold
+    DB.next[id]=(hit&&ex.inc&&!held)?e.w+ex.inc:e.w;    // applied ONCE, here
     if(hit&&ex.inc&&!held)ups.push(ex.n);
   });
-  let vol=0;ids.forEach(id=>A.entries[id].reps.forEach(r=>vol+=r*(A.entries[id].w||0)));
+  let vol=0;ids.forEach(id=>{vol+=volOf(id,A.entries[id].w,A.entries[id].reps)});
   DB.history.push({date:A.date,day:A.day,vol,entries:A.entries,
-    lowEnergy:!!A.lowEnergy, cycleDay: profile==='sa'?cycleDayNum():undefined});
+    lowEnergy:!!A.lowEnergy, cycleDay: profile.cycle?cycleDayNum():undefined});
   DB.active=null;save();render();
   toast(A.lowEnergy?'Session closed · low energy day, no progression'
     :(ups.length?`Session closed · ${ups.length} lift${ups.length>1?'s':''} moved up`:'Session closed'));
@@ -638,34 +1439,43 @@ function endSession(){
 
 /* ================= HISTORY ================= */
 function diag(){
-  let ls="?", persisted="?";
+  let ls="?";
   try{ localStorage.setItem("liftlog:probe","1");
        ls = localStorage.getItem("liftlog:probe")==="1" ? "writable" : "read-back failed";
        localStorage.removeItem("liftlog:probe"); }
   catch(e){ ls = "BLOCKED ("+(e.name||"error")+")"; }
-  let raw=null; try{ raw=localStorage.getItem(keyFor(profile)) }catch(e){}
-  let rawNR=null, rawSA=null;
-  try{ rawNR=localStorage.getItem(keyFor('nr')) }catch(e){}
-  try{ rawSA=localStorage.getItem(keyFor('sa')) }catch(e){}
+  const sz=k=>{try{const v=localStorage.getItem(k);return v?v.length+" chars":"EMPTY"}catch(e){return "?"}};
   const standalone = (window.navigator.standalone===true) ? "home-screen app" :
     (window.matchMedia&&window.matchMedia("(display-mode: standalone)").matches ? "standalone" : "browser tab");
   return `<div class="diag">
     <b>STORAGE CHECK</b><br>
-    active profile: ${profile.toUpperCase()}<br>
+    active profile: ${profile.name} (${profile.initials}) · ${profile.id}<br>
     localStorage: ${ls}<br>
-    saved record: ${raw? raw.length+" chars" : "EMPTY"}<br>
-    liftlog:v2:nr: ${rawNR? rawNR.length+" chars":"EMPTY"}<br>
-    liftlog:v2:sa: ${rawSA? rawSA.length+" chars":"EMPTY"}<br>
-    sessions in memory: ${DB.history.length}<br>
+    this profile's record: ${sz(keyFor(profile.id))}<br>
+    ${profiles.map(p=>`${p.initials} → ${keyFor(p.id)}: ${sz(keyFor(p.id))}`).join('<br>')}<br>
+    legacy liftlog:v2: ${sz(KEY_BASE)}<br>
+    legacy liftlog:v2:nr: ${sz(keyFor('nr'))}<br>
+    legacy liftlog:v2:sa: ${sz(keyFor('sa'))}<br>
+    sessions in memory: ${DB.history.length} · cardio entries: ${(DB.cardio||[]).length}<br>
+    week: ${weekArr().map(t=>t[0].toUpperCase()).join('')}<br>
+    cycle: D1 anchored ${anchor()} · today is ${DOW[cycleIdx(today())]}<br>
+    focus: ${DB.focus||'none'} · injuries: ${(DB.injuries||[]).map(i=>i.key).join(',')||'none'}<br>
     mode: ${standalone}<br>
     origin: ${location.origin}<br>
     window.storage: ${window.storage?"present":"absent"}
   </div>`;
 }
 function history(){
-  if(!DB.history.length)return `<div class="empty">No sessions yet.<br>
-    Start a day, log your sets, and end the session — the progression shows up here.</div>`+diag();
-  const rows=ALL.map(ex=>{
+  const mins=cycleMinutes(), pct=Math.min(100,Math.round(mins/CARDIO_TARGET*100));
+  const cardioCard=`<div class="h2">Easy movement</div><div class="hcard">
+    <div class="weekbar"><span style="width:${pct}%"></span></div>
+    <div class="weekno">${mins} / ${CARDIO_TARGET} min this cycle · ${(DB.cardio||[]).length} sessions logged all time</div></div>`;
+  if(!DB.history.length)return `<div class="empty">No strength sessions yet.<br>
+    Start a day, log your sets, and end the session — the progression shows up here.</div>`+cardioCard+diag();
+  const histIds=[...new Set(DB.history.flatMap(s=>Object.keys(s.entries)))];
+  const rowIds=[...new Set(ALL.map(x=>x.id).concat(histIds))];
+  const rows=rowIds.map(id=>{
+    const ex=exById(id); if(!ex)return null;
     const hits=DB.history.filter(s=>s.entries[ex.id]);
     if(!hits.length)return null;
     const first=hits[0].entries[ex.id].w, now=wOf(ex), std=STD[ex.id];
@@ -678,10 +1488,10 @@ function history(){
   const ses=[...DB.history].map((s,i)=>({s,i})).reverse().map(({s,i})=>{
     if(editIdx===i){
       const fields=Object.keys(s.entries).map(id=>{
-        const ex=ALL.find(e=>e.id===id)||{n:id}, en=s.entries[id];
+        const ex=exById(id)||{n:id}, en=s.entries[id];
         return `<div class="erow"><span class="en">${ex.n}</span>
           <input class="ei w" data-i="${i}" data-id="${id}" data-f="w" type="number" inputmode="numeric" value="${en.w}">
-          ${[0,1,2].map(k=>`<input class="ei r" data-i="${i}" data-id="${id}" data-f="${k}" type="number" inputmode="numeric" value="${en.reps[k]!=null?en.reps[k]:''}">`).join('')}
+          ${en.reps.map((_,k)=>`<input class="ei r" data-i="${i}" data-id="${id}" data-f="${k}" type="number" inputmode="numeric" value="${en.reps[k]!=null?en.reps[k]:''}">`).join('')}
         </div>`;}).join('');
       return `<div class="sesedit">
         <div class="erow head"><span class="en">${PLAN[s.day].name}</span><span>LB</span><span>S1</span><span>S2</span><span>S3</span></div>
@@ -691,7 +1501,7 @@ function history(){
         <div class="ebtns"><button class="mini" data-edone="1">DONE</button>
           <button class="mini del" data-edel="${i}">DELETE SESSION</button></div></div>`;
     }
-    const cycleTxt = (profile==='sa'&&s.cycleDay!=null)?` · cycle day ${s.cycleDay}`:'';
+    const cycleTxt = (profile.cycle&&s.cycleDay!=null)?` · cycle day ${s.cycleDay}`:'';
     const loweTxt = s.lowEnergy?' · LOW ENERGY':'';
     return `<div class="sesrow">
       <span class="d">${s.date.slice(5)}</span>
@@ -699,16 +1509,13 @@ function history(){
       <span class="v">${s.vol.toLocaleString()} lb</span>
       <button class="mini" data-edit="${i}">EDIT</button></div>`;}).join('');
   return `<div class="h2">Weight progression</div><div class="hcard">${rows}</div>
+    ${cardioCard}
     <div class="h2">Sessions · ${DB.history.length}</div><div class="hcard">${ses}</div>`+diag();
 }
 
 /* ---- past-session editing (event delegation on the list) ---- */
 function recalcVol(sess){
-  let v=0; Object.keys(sess.entries).forEach(id=>{
-    const en=sess.entries[id], ex=ALL.find(e=>e.id===id);
-    const mult=(ex&&ex.mult)||1, each=(ex&&ex.each)?2:1;
-    en.reps.forEach(r=>{ if(r) v += (en.w*mult*each)*r; });
-  });
+  let v=0; Object.keys(sess.entries).forEach(id=>{v+=volOf(id,sess.entries[id].w,sess.entries[id].reps)});
   sess.vol=Math.round(v);
 }
 document.getElementById('list').addEventListener('click',ev=>{
@@ -734,39 +1541,65 @@ document.getElementById('list').addEventListener('change',ev=>{
 
 /* ================= PROFILE SWITCHING ================= */
 function closeSwitcher(){ const sw=document.getElementById('switcher'); if(sw)sw.hidden=true; }
-async function switchProfile(newP){
-  if(newP!=='nr'&&newP!=='sa')return;
-  if(newP===profile){ closeSwitcher(); return; }
-  await save();                          // flush current profile first
-  profile=newP;
-  try{ await store.set(PROFILE_KEY, profile); }catch(e){}
-  let raw=null; try{ raw=await store.get(keyFor(profile)); }catch(e){}
+function setViewFromSlot(i){
+  viewSlot=i;
+  const t=weekArr()[i];
+  if(t==='strength'){ viewMode='strength'; const d=slotDay(i); if(d)view=d; }
+  else viewMode=t;
+}
+async function loadDBFor(id,planKey){
+  let raw=null; try{ raw=await store.get(keyFor(id)); }catch(e){}
   if(raw){
     try{
       const p=JSON.parse(raw);
-      DB={ next:p.next||{}, history:p.history||[], active:p.active||null,
-           holds:p.holds||{}, cycleStarts:p.cycleStarts||[] };
-    }catch(e){ DB=defaultDB(profile); }
-  } else {
-    DB=defaultDB(profile);
+      return { next:p.next||{}, history:p.history||[], active:p.active||null,
+               holds:p.holds||{}, cycleStarts:p.cycleStarts||[],
+               week:(p.week&&p.week.length===7)?p.week:[...WEEK_DEFAULT],
+               cardio:p.cardio||[],
+               focus:p.focus||null, injuries:p.injuries||[],
+               cycleAnchor:p.cycleAnchor||null };
+    }catch(e){}
   }
-  setProfilePlan();
-  editIdx=null; preLowEnergy=false; storageOK=null;
-  closeSwitcher();
+  return defaultDB(planKey);
+}
+/* Order matters: flush the current profile BEFORE repointing anything at the new one. */
+async function activateProfile(id){
+  const p=profiles.find(x=>x.id===id); if(!p)return;
+  if(profile && profile.id!==id) await save();     // flush outgoing profile to ITS key
+  profile=p;
+  try{ await store.set(ACTIVE_KEY, profile.id); }catch(e){}
+  DB=await loadDBFor(profile.id, profile.plan);
+  setActivePlan();
+  editIdx=null; preLowEnergy=false; storageOK=null; altOpen=null;
+  setViewFromSlot(cycleIdx(today()));
   render();
-  toast(`Switched to ${profile.toUpperCase()}`);
+}
+async function switchProfile(id){
+  if(!profile || id===profile.id){ closeSwitcher(); return; }
+  await activateProfile(id);
+  closeSwitcher();
+  toast(`Switched to ${profile.name}`);
 }
 
 /* ================= CONTROLS ================= */
-document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
-  view=t.dataset.d==='h'?'h':+t.dataset.d;render();window.scrollTo({top:0});
-}));
+document.getElementById('week').addEventListener('click',e=>{
+  const b=e.target.closest('[data-slot]'); if(!b)return;
+  setupOpen=false; altOpen=null;
+  setViewFromSlot(+b.dataset.slot);
+  render(); window.scrollTo({top:0});
+});
+document.getElementById('histBtn').addEventListener('click',()=>{
+  setupOpen=false;
+  viewMode = viewMode==='history' ? (weekArr()[viewSlot]==='strength'?'strength':weekArr()[viewSlot]) : 'history';
+  render(); window.scrollTo({top:0});
+});
 document.getElementById('avatarBtn').addEventListener('click',e=>{
   e.stopPropagation();
   const sw=document.getElementById('switcher');
-  sw.hidden=!sw.hidden;
+  if(sw.hidden){ sw.innerHTML=switcherHTML(); sw.hidden=false; } else sw.hidden=true;
 });
 document.getElementById('switcher').addEventListener('click',e=>{
+  const add=e.target.closest('[data-addp]'); if(add){ addProfile(); return; }
   const b=e.target.closest('.swopt'); if(!b)return;
   switchProfile(b.dataset.p);
 });
@@ -774,11 +1607,35 @@ document.addEventListener('click',e=>{
   const sw=document.getElementById('switcher');
   if(sw && !sw.hidden && e.target.id!=='avatarBtn' && !sw.contains(e.target)) sw.hidden=true;
 });
+document.getElementById('setup').addEventListener('click',()=>{
+  setupOpen=!setupOpen; render(); window.scrollTo({top:0});
+});
+document.getElementById('sess').addEventListener('click',e=>{
+  const add=e.target.closest('[data-addp]'); if(add){ addProfile(); return; }
+  const f=e.target.closest('[data-focus]');
+  if(f){ DB.focus=f.dataset.focus||null; setActivePlan(); save(); render();
+         toast(DB.focus?`${FOCUS[DB.focus].label} emphasis on`:'Emphasis cleared'); return; }
+  const inj=e.target.closest('[data-inj]');
+  if(inj){
+    const k=inj.dataset.inj;
+    if((DB.injuries||[]).some(i=>i.key===k)){ releaseInjury(k); }
+    else if(confirm(`Flag ${INJURIES[k].label}? Everything that loads it goes on hold, and the app will tell you what that costs.`)) applyInjury(k);
+    return;
+  }
+  const rel=e.target.closest('[data-injrel]');
+  if(rel){ if(confirm(`Release ${INJURIES[rel.dataset.injrel].label}?`)) releaseInjury(rel.dataset.injrel); return; }
+  const keep=e.target.closest('[data-nagkeep]');
+  if(keep){
+    const r=(DB.injuries||[]).find(i=>i.key===keep.dataset.nagkeep);
+    if(r){ r.snooze=today(); save(); render(); toast('Kept — I will ask again in two weeks'); }
+    return;
+  }
+});
 document.getElementById('export').addEventListener('click',()=>{
-  const payload=Object.assign({profile},DB);
+  const payload=Object.assign({profile:profile.id,profileName:profile.name,planKey:profile.plan},DB);
   const b=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(b);
-  a.download=`liftlog-${profile}-`+today()+'.json';a.click();
+  a.download=`liftlog-${profile.initials.toLowerCase()}-`+today()+'.json';a.click();
 });
 document.getElementById('import').addEventListener('click',()=>document.getElementById('file').click());
 document.getElementById('file').addEventListener('change',ev=>{
@@ -788,46 +1645,68 @@ document.getElementById('file').addEventListener('change',ev=>{
     try{
       const p=JSON.parse(rd.result);
       if(!p||typeof p!=='object')throw 0;
-      if(p.profile && p.profile!==profile){
-        toast(`That export is for ${p.profile.toUpperCase()}, not ${profile.toUpperCase()} — switch profile first`);
+      // accept: matching profile id, or a legacy 'nr'/'sa' export whose tag matches this plan
+      const legacyOK = (p.profile==='nr'||p.profile==='sa') && p.profile===profile.plan;
+      const ok = !p.profile || p.profile===profile.id || legacyOK;
+      if(!ok){
+        toast(`That export belongs to ${p.profileName||p.profile} — switch profile first`);
         return;
       }
       DB.next=p.next||{};DB.history=p.history||[];DB.active=p.active||null;DB.holds=p.holds||{};
       DB.cycleStarts=p.cycleStarts||[];
+      DB.week=(p.week&&p.week.length===7)?p.week:[...WEEK_DEFAULT];
+      DB.cardio=p.cardio||[];
+      DB.focus=p.focus||null; DB.injuries=p.injuries||[];
+      DB.cycleAnchor=p.cycleAnchor||null;
+      setActivePlan();
       save();render();toast(`Imported ${DB.history.length} session${DB.history.length===1?'':'s'}`);
     }catch(e){toast('That file is not a valid export')}
   };
   rd.readAsText(f);ev.target.value='';
 });
 document.getElementById('wipe').addEventListener('click',()=>{
-  if(!confirm('Erase all history, progression and the open session for this profile?'))return;
-  DB={next:{},history:[],active:null,holds:{},cycleStarts:[]};save();render();toast('Cleared');
+  if(!confirm(`Erase all history, progression and the open session for ${profile.name}? Other profiles are untouched.`))return;
+  DB=defaultDB(profile.plan); DB.holds={};   // a manual reset clears seeded holds too
+  save();render();toast('Cleared');
 });
 
 /* ================= BOOT ================= */
-render();
 (async()=>{
-  // migrate legacy single-profile key -> nr, non-destructive (old key is kept as backup)
+  /* 1. legacy single-key record -> :nr  (kept from the previous version, non-destructive) */
   try{
     const old = await store.get(KEY_BASE);
     const nrExisting = await store.get(keyFor('nr'));
-    if(old && !nrExisting){ await store.set(keyFor('nr'), old); }
+    if(old && !nrExisting) await store.set(keyFor('nr'), old);
   }catch(e){}
 
-  let storedProfile=null;
-  try{ storedProfile = await store.get(PROFILE_KEY); }catch(e){}
-  if(storedProfile==='sa'||storedProfile==='nr') profile=storedProfile;
-  setProfilePlan();
+  /* 2. seed the profile registry, copying the two fixed-key records onto generated ids.
+        Copy only — liftlog:v2, :nr and :sa are all left in place as backups. */
+  let raw=null; try{ raw=await store.get(PROFILES_KEY); }catch(e){}
+  if(raw){ try{ profiles=JSON.parse(raw)||[]; }catch(e){ profiles=[]; } }
+  if(!Array.isArray(profiles)||!profiles.length){
+    const nr={id:newId(),name:"Nicolas",initials:"NR",accent:"#43A177",bw:194,exp:"trained",
+              plan:"nr",lowEnergy:false,cycle:false};
+    const sa={id:newId(),name:"SA",initials:"SA",accent:"#e58fb0",bw:132,exp:"new",
+              plan:"sa",lowEnergy:true,cycle:true};
+    profiles=[nr,sa];
+    for(const [legacy,p] of [['nr',nr],['sa',sa]]){
+      try{
+        const src=await store.get(keyFor(legacy));
+        if(src && !(await store.get(keyFor(p.id)))) await store.set(keyFor(p.id), src);
+      }catch(e){}
+    }
+    await saveProfiles();
+  }
 
-  if(dirty){hydrated=true;return}          // user already worked: never clobber
-  let raw=null; try{raw=await store.get(keyFor(profile))}catch(e){}
-  if(raw)try{
-    const p=JSON.parse(raw);
-    DB.next=p.next||{};DB.history=p.history||[];DB.active=p.active||null;
-    DB.holds=p.holds||{}; DB.cycleStarts=p.cycleStarts||[];
-    if(DB.active&&DB.active.date!==today())DB.active=null;   // stale session
-  }catch(e){}
-  hydrated=true;render();
+  /* 3. resolve the active profile (legacy values 'nr'/'sa' map onto the seeded ids) */
+  let act=null; try{ act=await store.get(ACTIVE_KEY); }catch(e){}
+  let chosen=profiles.find(p=>p.id===act)
+          || profiles.find(p=>p.plan===act)
+          || profiles[0];
+
+  if(dirty){hydrated=true;return}   // user already worked: never clobber
+  await activateProfile(chosen.id);
+  hydrated=true;
 })();
 </script>
 </body>
