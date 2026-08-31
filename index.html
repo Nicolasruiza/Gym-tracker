@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0a0d0c">
 <title>Lift Log</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -55,6 +56,7 @@
     letter-spacing:.06em;opacity:.75;margin-top:3px}
   .wd.on{background:var(--accent);color:var(--accentText)}
   .wd.today:not(.on){box-shadow:inset 0 0 0 1.5px var(--accent)}
+  .wd.rest{opacity:.5}
   .wd.done small::after{content:" \2713";opacity:1}
   .histbtn{width:100%;min-height:44px;margin-bottom:8px;border:1px solid var(--rule);border-radius:9px;
     background:transparent;color:var(--muted);font-family:"IBM Plex Mono",monospace;
@@ -65,6 +67,7 @@
     font-size:9.5px;letter-spacing:.07em;cursor:pointer}
 
     font-size:12.5px;line-height:1.55;color:var(--muted)}
+  .z2 b{color:var(--bone)}
 
   /* setup */
   .setup{background:var(--card);border-radius:12px;padding:14px;margin:6px 0 16px;border:1px solid var(--rule)}
@@ -235,6 +238,145 @@
     background:var(--accent);color:var(--accentText);padding:12px 18px;border-radius:99px;font-weight:600;
     font-size:13.5px;transition:transform .25s ease;z-index:50;max-width:92vw;text-align:center}
   .toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* ================= 2026 VISUAL REVAMP ================= */
+  :root{
+    --ink:#0A0D0C;--card:#141816;--card2:#1B211E;--bone:#F3F1E8;--muted:#8F9B94;
+    --pine:#B9F227;--brass:#FFB86B;--red:#FF746C;--rule:#29302C;--pink:#F39BC0;
+    --accent:#B9F227;--accentText:#101607;--accentDim:#222D17;--accentBright:#D6FF6A;
+    --accentBorder:#526923;--accentGradA:#1B2316;--accentGlow:rgba(185,242,39,.18)
+  }
+  html{scroll-behavior:smooth;background:var(--ink)}
+  body{min-height:100vh;padding-bottom:112px;background:
+    radial-gradient(circle at 50% -120px,rgba(185,242,39,.10),transparent 340px),
+    linear-gradient(180deg,#0A0D0C 0%,#0D100F 100%);font-size:15px}
+  button,input,select{font:inherit}
+  button{transition:transform .16s ease,background-color .16s ease,border-color .16s ease,color .16s ease,opacity .16s ease}
+  button:active{transform:scale(.975)}
+  button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+  .wrap{max-width:680px;padding:0 16px}
+
+  .profilebar{padding:24px 0 20px;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto;
+    column-gap:13px;align-items:center;text-align:left}
+  .profilebar::before{content:"LIFT LOG / 3";grid-column:1/3;margin-bottom:19px;color:var(--bone);
+    font-family:"Barlow Condensed",sans-serif;font-size:27px;font-weight:700;letter-spacing:.065em}
+  .profilebar::after{content:"Progressive overload, without the spreadsheet.";position:absolute;right:0;top:31px;
+    color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase}
+  .avatar{grid-row:2/4;width:52px;height:52px;border-radius:15px;font-size:17px;box-shadow:0 10px 28px var(--accentGlow)}
+  .pname{align-self:end;color:var(--bone);font-size:18px;line-height:1.05;letter-spacing:.045em}
+  .cycleday{align-self:start;margin-top:5px;font-size:10px;color:var(--accent)}
+  .switcher{top:105px;left:0;transform:none;min-width:min(320px,calc(100vw - 32px));padding:8px;border-radius:15px;
+    box-shadow:0 18px 48px rgba(0,0,0,.55)}
+
+  .week{top:0;margin:0 -16px;padding:10px 16px;background:rgba(10,13,12,.88);backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,.04)}
+  .wd{min-height:62px;border-radius:12px;background:transparent;border:1px solid var(--rule);font-size:17px}
+  .wd small{font-size:8px;margin-top:5px}.wd.on{border-color:var(--accent);box-shadow:0 8px 22px var(--accentGlow)}
+  .wd.rest{opacity:.62}.wd.today:not(.on){box-shadow:inset 0 0 0 1px var(--accent)}
+  .histbtn{margin:12px 0 10px;border-radius:12px;background:var(--card);border-color:transparent;text-align:left;
+    padding:0 15px;position:relative;color:var(--bone)}
+  .histbtn::after{content:"→";position:absolute;right:15px;color:var(--accent);font-size:16px}
+
+  .sess,.setup,.ex,.hcard{border-radius:16px;border-color:var(--rule);box-shadow:0 14px 34px rgba(0,0,0,.16)}
+  .sess{padding:18px;margin:10px 0 18px}.sess.live{box-shadow:0 16px 40px var(--accentGlow)}
+  .sess .st b{font-size:12px}.sess p{font-size:14px}.big{min-height:58px;border-radius:12px;font-size:23px}
+  .live-stats{padding:11px 0 3px}.live-stats b{font-size:25px}
+  .blk{margin:26px 2px 10px;font-size:9px;color:#AAB4AE}
+  .ex{padding:16px;margin-bottom:11px}.ex.key{box-shadow:inset 3px 0 0 var(--accent)}
+  .top{margin-bottom:14px}.top h3{font-size:16px}.tgt{font-size:16px;color:var(--accent)}
+  .vid,.altbtn{background:#242B27;border:1px solid var(--rule);border-radius:11px}
+  .row{gap:8px}.fld{flex:1 1 0;min-width:0}.fld.grow{flex:1.25 1 0}
+  input{height:56px;border-radius:11px;background:#0E1210;border-color:#303834}
+  .log{height:56px;border-radius:11px;flex-basis:64px}.plates{margin-top:12px}.ft{margin-top:12px}
+  .pill{padding:6px 10px}.badge{padding:4px 7px}
+
+  .setup{padding:17px}.pfg{gap:10px}.pfg input,.pfg select{border-radius:10px;background:#0E1210}
+  .fsel button,.swopt,.lowe,.cyclebtn{border-radius:11px}.dx,.cost,.nag{border-radius:13px}
+  .h2{font-size:27px;margin-top:28px}.hcard{padding:15px}.hrow{padding:12px 0}.track{height:8px}
+  .sesrow{padding:12px 0}.diag{opacity:.5}.empty{padding:48px 18px;background:var(--card);border-radius:16px}
+
+  .bar2{position:fixed;z-index:18;left:50%;bottom:12px;transform:translateX(-50%);width:min(648px,calc(100% - 24px));
+    margin:0;padding:7px;gap:4px;background:rgba(20,24,22,.92);border:1px solid var(--rule);border-radius:16px;
+    box-shadow:0 14px 45px rgba(0,0,0,.48);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+  .bar2 button{border:none;border-radius:10px;min-height:48px;font-size:9px}.bar2 button:first-child{color:var(--bone);background:var(--card2)}
+  .toast{bottom:86px;border-radius:12px;box-shadow:0 12px 35px rgba(0,0,0,.45)}
+
+  @media (max-width:480px){
+    .profilebar::after{display:none}.profilebar::before{margin-bottom:14px}.wrap{padding:0 12px}
+    .week{margin:0 -12px;padding:9px 12px}.wd{min-height:58px;font-size:15px}.ex{padding:14px}
+    .top{align-items:flex-start;flex-wrap:wrap}.top h3{flex-basis:calc(100% - 104px)}
+    .tgt{order:4;width:100%;padding-top:2px;font-size:13px}.row{gap:5px}.fld label{left:6px}
+    input{font-size:16px;padding-left:3px;padding-right:3px}.log{flex-basis:58px;font-size:14px}
+    .badge{display:inline-flex;margin:6px 0 0}.hrow{flex-wrap:wrap}.track{order:3;flex-basis:100%}
+    .sesrow{flex-wrap:wrap}.sesrow .t{min-width:180px}.sesrow .v{margin-left:62px}
+  }
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{transition:none!important}}
+
+  /* ================= PRODUCT EXPERIENCE PASS ================= */
+  .today-card{position:relative;overflow:hidden;background:linear-gradient(145deg,var(--accentGradA),var(--card) 64%);
+    border:1px solid var(--accentBorder);border-radius:20px;padding:20px;margin:10px 0 16px;box-shadow:0 20px 50px rgba(0,0,0,.22)}
+  .today-card::after{content:"";position:absolute;width:170px;height:170px;border-radius:50%;right:-80px;top:-95px;
+    border:34px solid var(--accentGlow);pointer-events:none}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:600;letter-spacing:.16em;color:var(--accent);text-transform:uppercase}
+  .today-title{font-family:"Barlow Condensed",sans-serif;font-size:38px;line-height:.95;text-transform:uppercase;
+    letter-spacing:.02em;margin:8px 0 10px;max-width:75%}
+  .today-sub{font-size:13px;line-height:1.5;color:var(--muted);max-width:90%}.today-sub b{color:var(--bone)}
+  .today-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:18px 0 15px}
+  .today-stat{background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.055);border-radius:12px;padding:10px}
+  .today-stat b{display:block;font-family:"Barlow Condensed",sans-serif;font-size:21px;color:var(--bone)}
+  .today-stat small{display:block;margin-top:2px;font-family:"IBM Plex Mono",monospace;font-size:7px;letter-spacing:.11em;color:var(--muted)}
+  .weekgoal{display:flex;align-items:center;gap:9px;margin:12px 0 4px}.weekgoal span{height:7px;flex:1;border-radius:99px;background:#303632}
+  .weekgoal span.on{background:var(--accent);box-shadow:0 0 15px var(--accentGlow)}
+  .weekgoal-label{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;color:var(--muted);margin-bottom:16px}
+  .today-card .big{position:relative;z-index:1}.today-card.resting{border-color:#4A3A25;background:linear-gradient(145deg,#211C15,var(--card))}
+
+  .lift-aim{display:flex;align-items:center;gap:7px;margin:-4px 0 12px;font-family:"IBM Plex Mono",monospace;
+    color:var(--muted);font-size:10px;letter-spacing:.02em}.lift-aim strong{color:var(--bone)}.lift-aim .arrow{color:var(--accent)}
+  .moveicon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;flex:0 0 28px;border-radius:9px;
+    background:var(--accentDim);color:var(--accent);font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:700}
+  .top h3{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.top h3 .badge{margin-left:0}
+
+  .session-progress{height:8px;background:#0E1210;border-radius:99px;overflow:hidden;margin:4px 0 15px}
+  .session-progress span{display:block;height:100%;background:var(--accent);border-radius:inherit;transition:width .3s ease}
+  body.workout-live .profilebar{display:none}body.workout-live .week{display:none}body.workout-live .histbtn{display:none}
+  body.workout-live .bar2{display:none}body.workout-live{padding-top:9px;padding-bottom:34px}
+  body.workout-live .sess{position:sticky;top:8px;z-index:12;box-shadow:0 15px 45px rgba(0,0,0,.45)}
+  body.workout-live .ex.current{border-color:var(--accent);box-shadow:0 15px 42px var(--accentGlow)}
+  body.workout-live .ex.queued,body.workout-live .ex.done{padding:11px 13px;opacity:.66}
+  body.workout-live .ex.queued .row,body.workout-live .ex.queued .lift-aim,body.workout-live .ex.queued .ft,
+  body.workout-live .ex.queued .plates,body.workout-live .ex.done .row,body.workout-live .ex.done .lift-aim,
+  body.workout-live .ex.done .ft,body.workout-live .ex.done .plates{display:none}
+  body.workout-live .ex.queued .top,body.workout-live .ex.done .top{margin:0;align-items:center}
+  body.workout-live .ex.queued .top h3,body.workout-live .ex.done .top h3{font-size:13px}
+  body.workout-live .ex.queued .vid,body.workout-live .ex.queued .altbtn,body.workout-live .ex.done .vid,body.workout-live .ex.done .altbtn{display:none}
+  body.workout-live .ex.done{border-color:var(--accentBorder)}body.workout-live .ex.done::after{content:"COMPLETED";float:right;
+    margin-top:-20px;font-family:"IBM Plex Mono",monospace;font-size:7px;letter-spacing:.1em;color:var(--accent)}
+  body.workout-live .blk{display:none}body.workout-live .blk.current-block{display:flex;margin-top:18px}
+
+  .complete-card{text-align:center;background:radial-gradient(circle at 50% 10%,var(--accentGlow),transparent 55%),var(--card);
+    border:1px solid var(--accent);border-radius:22px;padding:30px 20px;margin:10px 0 18px;animation:completeIn .42s ease both}
+  .complete-mark{display:grid;place-items:center;width:68px;height:68px;margin:0 auto 15px;border-radius:21px;background:var(--accent);
+    color:var(--accentText);font-family:"Barlow Condensed",sans-serif;font-size:39px;font-weight:700;box-shadow:0 0 42px var(--accentGlow)}
+  .complete-card h2{font-family:"Barlow Condensed",sans-serif;font-size:38px;text-transform:uppercase;line-height:1;margin-bottom:8px}
+  .complete-card p{color:var(--muted);font-size:13px;line-height:1.55}.complete-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:20px 0}
+  .complete-grid div{background:#0E1210;border-radius:12px;padding:11px 5px}.complete-grid b{display:block;color:var(--accent);font-size:20px}
+  .complete-grid small{font-family:"IBM Plex Mono",monospace;font-size:7px;color:var(--muted);letter-spacing:.1em}
+  @keyframes completeIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+
+  .history-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 22px}
+  .history-summary div{background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:13px 10px}
+  .history-summary b{display:block;font-family:"Barlow Condensed",sans-serif;font-size:25px;color:var(--accent)}
+  .history-summary small{font-family:"IBM Plex Mono",monospace;font-size:7px;letter-spacing:.09em;color:var(--muted)}
+  .spark{display:flex;align-items:flex-end;gap:2px;width:62px;height:24px;padding:2px}.spark i{flex:1;min-width:3px;border-radius:2px 2px 0 0;background:var(--accent);opacity:.8}
+  .pr{color:var(--accent);font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:.08em}
+
+  .bar2{width:min(330px,calc(100% - 24px))}.bar2 button{font-size:10px}.bar2 #more{color:var(--bone)}
+  .moremenu{position:absolute;bottom:63px;right:0;width:190px;padding:7px;background:var(--card);border:1px solid var(--rule);
+    border-radius:14px;box-shadow:0 18px 45px rgba(0,0,0,.5)}.moremenu[hidden]{display:none}.moremenu button{display:block;width:100%;text-align:left;padding:0 12px}
+  .moremenu button.danger{color:var(--red)}
+
+  @media(max-width:480px){.today-title{font-size:34px}.today-card{padding:18px 16px}.today-meta{gap:5px}.today-stat{padding:9px 7px}
+    body.workout-live .wrap{padding:0 10px}.history-summary{gap:5px}.history-summary div{padding:11px 7px}.spark{width:48px}}
 </style>
 </head>
 <body>
@@ -251,9 +393,12 @@
   <div id="list"></div>
   <div class="bar2">
     <button id="setup">SETUP</button>
-    <button id="export">EXPORT</button>
-    <button id="import">IMPORT</button>
-    <button id="wipe">RESET</button>
+    <button id="more" aria-expanded="false">MORE</button>
+    <div class="moremenu" id="moreMenu" hidden>
+      <button id="export">EXPORT DATA</button>
+      <button id="import">IMPORT DATA</button>
+      <button id="wipe" class="danger">RESET PROFILE</button>
+    </div>
   </div>
   <input type="file" id="file" accept="application/json,.json" style="display:none">
 </div>
@@ -592,14 +737,14 @@ function defaultDB(planKey){
   return {next:{},history:[],active:null,
           holds: planKey==='nr' ? {rdl:1} : {},
           cycleStarts:[],
-          focus:null, injuries:[]};
+          focus:null, injuries:[], cycleAnchor:null};   // anchor() sets this on first use
 }
 
 /* ================= STATE ================= */
 let profiles=[];
 let profile=null;           // the active profile OBJECT
 let DB=defaultDB('nr');
-let editIdx=null, preLowEnergy=false, setupOpen=false, altOpen=null;
+let editIdx=null, preLowEnergy=false, setupOpen=false, altOpen=null, celebration=null;
 let view=1;                 // rotation day 1..3, only meaningful when viewMode==='strength'
 let viewMode='strength';    // strength | easy | rest | history
 let hydrated=false, dirty=false, storageOK=null;
@@ -630,7 +775,15 @@ const svChip=()=>storageOK===false
 const today=()=>{const d=new Date();
   return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
 const dayDiff=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+const fmtLocal=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 /* Monday-based weekday index, 0=Mon .. 6=Sun */
+/* The 7-day block is a ROLLING cycle anchored to the day you started it, not Mon–Sun.
+   Start on a Thursday and that Thursday is D1. */
+const anchor=()=>{ if(!DB.cycleAnchor)DB.cycleAnchor=today(); return DB.cycleAnchor };
+const cycleIdx=ds=>{const n=dayDiff(anchor(),ds); return ((n%7)+7)%7};
+const blockStartOf=ds=>addDays(anchor(), Math.floor(dayDiff(anchor(),ds)/7)*7);
+const addDays=(ds,n)=>{const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+n);return fmtLocal(d)};
+const DOW=["D1","D2","D3","D4","D5","D6","D7"];
 
 /* ================= ACTIVE PLAN ================= */
 let PLAN, BW, STD, QMAP, ALL;
@@ -910,6 +1063,34 @@ function cycleDayNum(){
   return dayDiff(last,today())+1;
 }
 
+function sessionItems(day,lowEnergy){
+  return PLAN[day].blocks.filter(b=>!(lowEnergy&&b.t==='Isolation')).flatMap(b=>b.items);
+}
+function recentStreak(){
+  if(!DB.history.length)return 0;
+  const dates=[...new Set(DB.history.map(h=>h.date))].sort().reverse();
+  let streak=1;
+  for(let i=1;i<dates.length;i++){
+    const gap=dayDiff(dates[i],dates[i-1]);
+    if(gap<=4)streak++;else break;
+  }
+  return streak;
+}
+function movementGlyph(ex){
+  const p=metaOf(ex.id).pat||'';
+  return ({'push-h':'→','push-v':'↑','pull-h':'←','pull-v':'↓',squat:'↕',hinge:'◇',
+    core:'◎','anti-ext':'◎','anti-rot':'↻','anti-lat':'◐',iso:'•'})[p]||'•';
+}
+function completionBox(){
+  const c=celebration;
+  return `<div class="complete-card">
+    <div class="complete-mark">✓</div><div class="eyebrow">Workout complete</div>
+    <h2>${c.name} — done.</h2><p>${c.ups?`${c.ups} lift${c.ups===1?'':'s'} earned a heavier target next time.`:'Consistency banked. The next session is ready when you are.'}</p>
+    <div class="complete-grid"><div><b>${c.exercises}</b><small>EXERCISES</small></div>
+      <div><b>${c.volume.toLocaleString()}</b><small>LB VOLUME</small></div><div><b>${c.minutes}</b><small>MINUTES</small></div></div>
+    <button class="big" id="celebrateDone">SEE WHAT'S NEXT</button></div>`;
+}
+
 /* ================= RENDER ================= */
 function renderProfileBar(){
   applyAccent();
@@ -946,19 +1127,30 @@ function renderWeek(){
 function render(){
   const S=document.getElementById('sess'), L=document.getElementById('list');
   renderProfileBar(); renderWeek();
+  const liveNow=!!(DB.active&&DB.active.day===view&&!setupOpen&&viewMode==='strength'&&!celebration);
+  document.body.classList.toggle('workout-live',liveNow);
   if(setupOpen){ S.innerHTML=setupBox(); L.innerHTML=''; wireSetup(); return }
   if(viewMode==='history'){ S.innerHTML=''; L.innerHTML=history(); return }
+  if(celebration){S.innerHTML=completionBox();L.innerHTML='';wire();return}
   S.innerHTML=nagHTML()+sessBox(); wire();
   L.innerHTML='';
   const A=DB.active, live=A&&A.day===view;
+  const visible=sessionItems(view,live&&A.lowEnergy);
+  const current=live?visible.find(ex=>{
+    const loggedId=(A.swaps&&A.swaps[ex.id])||ex.id;
+    return !A.entries[loggedId];
+  }):null;
   PLAN[view].blocks.forEach(b=>{
     if(live && A.lowEnergy && b.t==='Isolation') return;
     const h=document.createElement('div');h.className='blk';
+    if(current&&b.items.some(x=>x.id===current.id))h.classList.add('current-block');
     h.innerHTML=`<span>${b.t}</span><i></i>`;L.appendChild(h);
     b.items.forEach(ex=>{
       const to = live && A.swaps && A.swaps[ex.id];
       const shown = to ? (ALL.find(x=>x.id===to)||ex) : ex;
-      L.appendChild(card(shown,ex));
+      const c=card(shown,ex);
+      if(live)c.classList.add(c.classList.contains('done')?'done':(current&&current.id===ex.id?'current':'queued'));
+      L.appendChild(c);
     });
   });
 }
@@ -967,7 +1159,7 @@ function sessBox(){
   const A=DB.active;
   const cycleHtml = profile.cycle ? `<button class="cyclebtn" id="cycleBtn">PERIOD STARTED TODAY</button>` : '';
   if(A&&A.day===view){
-    const n=Object.keys(A.entries).length, tot=items(view).length;
+    const n=Object.keys(A.entries).length, tot=sessionItems(view,A.lowEnergy).length;
     let vol=0;Object.entries(A.entries).forEach(([id,e])=>{vol+=volOf(id,e.w,e.reps)});
     const loweHtml = profile.lowEnergy?`<button class="lowe ${A.lowEnergy?'on':''}" id="lowEnergyBtn">LOW ENERGY DAY${A.lowEnergy?' · ON':''}</button>`:'';
     return `<div class="sess live">
@@ -976,6 +1168,7 @@ function sessBox(){
         <div><b>${n}/${tot}</b><small>EXERCISES</small></div>
         <div><b>${vol.toLocaleString()}</b><small>LB VOLUME</small></div>
       </div>
+      <div class="session-progress"><span style="width:${Math.round(n/Math.max(1,tot)*100)}%"></span></div>
       <button class="big stop" id="end">END SESSION</button>
       <button class="anyway" id="scrap">DISCARD THIS SESSION</button>
       ${loweHtml}${cycleHtml}</div>`;
@@ -988,9 +1181,15 @@ function sessBox(){
   const canReopen=last&&last.date===today()&&last.day===view;
   const cls=g.ok?'':'rest';
   const loweHtmlPre = profile.lowEnergy?`<button class="lowe ${preLowEnergy?'on':''}" id="lowEnergyBtn">LOW ENERGY DAY${preLowEnergy?' · ON':''}</button>`:'';
-  return `<div class="sess ${cls}">
-    <div class="st"><span class="dot ${g.ok?'go':'no'}"></span><b>${g.ok?'Ready':'Rest day'}</b></div>
-    <p>${g.msg}${g.ok&&sug!==view?` Up next in the rotation: <b>${PLAN[sug].name}</b>.`:''}</p>
+  const count=sessionItems(view,preLowEnergy).length, mins=Math.ceil(count*4/5)*5, done=cycleDone().size;
+  return `<div class="today-card ${g.ok?'':'resting'}">
+    <div class="eyebrow">${g.ok?'Today’s training':'Recovery day'}</div>
+    <div class="today-title">${PLAN[view].name}</div>
+    <div class="today-sub">${g.msg}${g.ok&&sug!==view?` Up next in the rotation: <b>${PLAN[sug].name}</b>.`:''}</div>
+    <div class="today-meta"><div class="today-stat"><b>${count}</b><small>EXERCISES</small></div>
+      <div class="today-stat"><b>~${mins}</b><small>MINUTES</small></div><div class="today-stat"><b>${recentStreak()}</b><small>SESSION STREAK</small></div></div>
+    <div class="weekgoal">${[0,1,2].map(i=>`<span class="${i<done?'on':''}"></span>`).join('')}</div>
+    <div class="weekgoal-label">${done} OF 3 WORKOUTS COMPLETE THIS ROTATION</div>
     ${canReopen?`<button class="big" id="reopen">REOPEN ${PLAN[last.day].name}</button>
        <p style="margin:10px 0 0;font-size:12px">Closed by mistake? This puts today's ${PLAN[last.day].name} back in progress with everything you logged, and undoes the weight changes until you close it again.</p>`
       :`<button class="big ${g.ok?'':'off'}" id="start">START ${PLAN[view].name}</button>
@@ -1016,10 +1215,14 @@ function card(ex,orig){
       <button class="${!swapped?'cur':''}" data-swap="${orig.id}" data-to="">${orig.n}</button>
       ${alts.map(a=>`<button class="${swapped===a.id?'cur':''}" data-swap="${orig.id}" data-to="${a.id}">${a.n}</button>`).join('')}
     </div>`:'';
+  const prev=lastOf(ex.id);
+  const aim=`<div class="lift-aim"><span>${prev?`LAST <strong>${prev.w||'BW'} × ${prev.reps.join('/')}</strong>`:'FIRST SESSION'}</span>
+    <span class="arrow">→</span><span>TODAY <strong>${w||'BW'} × ${ex.r}</strong></span></div>`;
   el.innerHTML=`
-   <div class="top"><h3>${ex.n}${badge(ex)}</h3><div class="tgt">${setCount} × ${ex.r}</div>${altBtn}${vid(ex)}</div>
+   <div class="top"><h3><span class="moveicon">${movementGlyph(ex)}</span><span class="liftname">${ex.n}</span>${badge(ex)}</h3><div class="tgt">${setCount} × ${ex.r}</div>${altBtn}${vid(ex)}</div>
    ${altList}
    ${swapped?`<div class="ft"><span class="swapped">SWAPPED FOR THIS SESSION · logs to its own history</span></div>`:''}
+   ${aim}
    <div class="row">
      <div class="fld"><label>${ex.bw?'ADDED LB':(ex.mult?'LB PINNED':(ex.plates?'LB PLATES':'LB'+(ex.each?' EACH':'')))}</label>
        <input type="number" inputmode="decimal" id="w_${ex.id}" value="${w||''}" ${live?'':'disabled'}></div>
@@ -1038,7 +1241,8 @@ function card(ex,orig){
     if(box)box.innerHTML=plateLine(ex,+(wIn.value||0));
     const mu=el.querySelector('#mu_'+ex.id);
     if(mu)mu.innerHTML=`<span class="bar45">dual cable ·</span> <span class="pl">${(+(wIn.value||0))*ex.mult} lb</span> <span class="bar45">actually moving</span>`;
-    el.querySelector('.top h3').innerHTML=ex.n+badgeLive(ex,+(wIn.value||0));
+    const oldBadge=el.querySelector('.top h3 .badge');
+    if(oldBadge)oldBadge.outerHTML=badgeLive(ex,+(wIn.value||0));
   });
   el.querySelectorAll('[data-s]').forEach(inp=>{
     const t=ex.r;
@@ -1244,6 +1448,8 @@ async function addProfile(){
 
 /* ================= ACTIONS ================= */
 function wire(){
+  const cd=document.getElementById('celebrateDone');
+  if(cd)cd.addEventListener('click',()=>{celebration=null;setViewFromSlot();render();window.scrollTo({top:0})});
   const s=document.getElementById('start');
   if(s)s.addEventListener('click',()=>{if(gate().ok)begin();else toast('Rest day — see the note above')});
   const f=document.getElementById('force');
@@ -1268,6 +1474,7 @@ function wire(){
   });
 }
 function begin(){
+  celebration=null;
   DB.active={day:view,date:today(),started:Date.now(),entries:{},lowEnergy:preLowEnergy};
   preLowEnergy=false;
   save();render();toast(`${PLAN[view].name} started`);
@@ -1307,6 +1514,8 @@ function endSession(){
   let vol=0;ids.forEach(id=>{vol+=volOf(id,A.entries[id].w,A.entries[id].reps)});
   DB.history.push({date:A.date,day:A.day,vol,entries:A.entries,
     lowEnergy:!!A.lowEnergy, cycleDay: profile.cycle?cycleDayNum():undefined});
+  celebration={name:PLAN[A.day].name,exercises:ids.length,volume:Math.round(vol),ups:ups.length,
+    minutes:Math.max(1,Math.round((Date.now()-(A.started||Date.now()))/60000))};
   DB.active=null;save();render();
   toast(A.lowEnergy?'Session closed · low energy day, no progression'
     :(ups.length?`Session closed · ${ups.length} lift${ups.length>1?'s':''} moved up`:'Session closed'));
@@ -1332,6 +1541,7 @@ function diag(){
     legacy liftlog:v2:nr: ${sz(keyFor('nr'))}<br>
     legacy liftlog:v2:sa: ${sz(keyFor('sa'))}<br>
     sessions in memory: ${DB.history.length}<br>
+    cycle: D1 anchored ${anchor()} · today is ${DOW[cycleIdx(today())]}<br>
     focus: ${DB.focus||'none'} · injuries: ${(DB.injuries||[]).map(i=>i.key).join(',')||'none'}<br>
     mode: ${standalone}<br>
     origin: ${location.origin}<br>
@@ -1339,7 +1549,7 @@ function diag(){
   </div>`;
 }
 function history(){
-  if(!DB.history.length)return `<div class="empty">No strength sessions yet.<br>
+  if(!DB.history.length)return historySummaryHTML()+`<div class="empty">No strength sessions yet.<br>
     Start a day, log your sets, and end the session — the progression shows up here.</div>`+diag();
   const histIds=[...new Set(DB.history.flatMap(s=>Object.keys(s.entries)))];
   const rowIds=[...new Set(ALL.map(x=>x.id).concat(histIds))];
@@ -1349,9 +1559,11 @@ function history(){
     if(!hits.length)return null;
     const first=hits[0].entries[ex.id].w, now=wOf(ex), std=STD[ex.id];
     const pct=std?Math.min(100,Math.round(now/std*100)):null;
+    const vals=hits.slice(-6).map(h=>h.entries[ex.id].w||0), hi=Math.max(1,...vals);
+    const spark=`<span class="spark" aria-label="Recent weight trend">${vals.map(v=>`<i style="height:${Math.max(12,Math.round(v/hi*100))}%"></i>`).join('')}</span>`;
     return `<div class="hrow">
       <span class="nm">${ex.n}</span>
-      ${pct!=null?`<span class="track"><span style="width:${pct}%"></span></span>`:'<span class="track"></span>'}
+      ${spark}
       <span class="delta">${first} → <b>${now}</b>${now>first?` +${now-first}`:''}</span></div>`;
   }).filter(Boolean).join('');
   const ses=[...DB.history].map((s,i)=>({s,i})).reverse().map(({s,i})=>{
@@ -1377,8 +1589,17 @@ function history(){
       <span class="t">${PLAN[s.day].name} · ${Object.keys(s.entries).length} exercises${cycleTxt}${loweTxt}</span>
       <span class="v">${s.vol.toLocaleString()} lb</span>
       <button class="mini" data-edit="${i}">EDIT</button></div>`;}).join('');
-  return `<div class="h2">Weight progression</div><div class="hcard">${rows}</div>
+  return historySummaryHTML()+`<div class="h2">Weight progression</div><div class="hcard">${rows}</div>
     <div class="h2">Sessions · ${DB.history.length}</div><div class="hcard">${ses}</div>`+diag();
+}
+
+function historySummaryHTML(){
+  const total=DB.history.reduce((a,s)=>a+(s.vol||0),0);
+  const month=DB.history.filter(s=>dayDiff(s.date,today())<=30).length;
+  const ids=[...new Set(DB.history.flatMap(s=>Object.keys(s.entries)))];
+  let prs=0;ids.forEach(id=>{const vals=DB.history.filter(s=>s.entries[id]).map(s=>s.entries[id].w||0);if(vals.length>1&&vals[vals.length-1]>vals[0])prs++});
+  return `<div class="history-summary"><div><b>${month}</b><small>SESSIONS / 30D</small></div>
+    <div><b>${Math.round(total/1000)}K</b><small>LIFETIME VOLUME</small></div><div><b>${prs}</b><small>LIFTS IMPROVED</small></div></div>`;
 }
 
 /* ---- past-session editing (event delegation on the list) ---- */
@@ -1418,9 +1639,7 @@ async function loadDBFor(id,planKey){
       return { next:p.next||{}, history:p.history||[], active:p.active||null,
                holds:p.holds||{}, cycleStarts:p.cycleStarts||[],
                focus:p.focus||null, injuries:p.injuries||[],
-               /* no longer shown anywhere, but carried through rather than dropped:
-                  deleting them on load would erase them on the next save */
-               week:p.week, cardio:p.cardio, cycleAnchor:p.cycleAnchor };
+               cycleAnchor:p.cycleAnchor||null };
     }catch(e){}
   }
   return defaultDB(planKey);
@@ -1473,6 +1692,14 @@ document.addEventListener('click',e=>{
 document.getElementById('setup').addEventListener('click',()=>{
   setupOpen=!setupOpen; render(); window.scrollTo({top:0});
 });
+document.getElementById('more').addEventListener('click',e=>{
+  e.stopPropagation();const m=document.getElementById('moreMenu'),b=e.currentTarget;
+  m.hidden=!m.hidden;b.setAttribute('aria-expanded',String(!m.hidden));
+});
+document.addEventListener('click',e=>{
+  const m=document.getElementById('moreMenu'),b=document.getElementById('more');
+  if(m&&!m.hidden&&!m.contains(e.target)&&e.target!==b){m.hidden=true;b.setAttribute('aria-expanded','false')}
+});
 document.getElementById('sess').addEventListener('click',e=>{
   const add=e.target.closest('[data-addp]'); if(add){ addProfile(); return; }
   const f=e.target.closest('[data-focus]');
@@ -1518,7 +1745,7 @@ document.getElementById('file').addEventListener('change',ev=>{
       DB.next=p.next||{};DB.history=p.history||[];DB.active=p.active||null;DB.holds=p.holds||{};
       DB.cycleStarts=p.cycleStarts||[];
       DB.focus=p.focus||null; DB.injuries=p.injuries||[];
-      DB.week=p.week; DB.cardio=p.cardio; DB.cycleAnchor=p.cycleAnchor;
+      DB.cycleAnchor=p.cycleAnchor||null;
       setActivePlan();
       save();render();toast(`Imported ${DB.history.length} session${DB.history.length===1?'':'s'}`);
     }catch(e){toast('That file is not a valid export')}
