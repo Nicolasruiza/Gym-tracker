@@ -47,7 +47,7 @@
     font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;cursor:pointer}
 
   /* week strip */
-  .week{position:sticky;top:0;z-index:10;background:var(--ink);padding:12px 0 6px;display:flex;gap:4px}
+  .week{position:sticky;top:0;z-index:10;background:var(--ink);padding:12px 0 6px;display:flex;gap:6px}
   .wd{flex:1;min-height:52px;padding:7px 1px;border:none;border-radius:8px;cursor:pointer;
     background:var(--card);color:var(--muted);font-family:"Barlow Condensed",sans-serif;
     font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;line-height:1.1}
@@ -55,28 +55,16 @@
     letter-spacing:.06em;opacity:.75;margin-top:3px}
   .wd.on{background:var(--accent);color:var(--accentText)}
   .wd.today:not(.on){box-shadow:inset 0 0 0 1.5px var(--accent)}
-  .wd.rest{opacity:.5}
   .wd.done small::after{content:" \2713";opacity:1}
   .histbtn{width:100%;min-height:44px;margin-bottom:8px;border:1px solid var(--rule);border-radius:9px;
     background:transparent;color:var(--muted);font-family:"IBM Plex Mono",monospace;
     font-size:10px;letter-spacing:.14em;cursor:pointer}
   .histbtn.on{background:var(--accentDim);color:var(--accent);border-color:var(--accent)}
 
-  .daysel{display:flex;gap:5px;margin-bottom:10px}
-  .daysel button{flex:1;min-height:44px;border:1px solid var(--rule);border-radius:8px;
     background:transparent;color:var(--muted);font-family:"IBM Plex Mono",monospace;
     font-size:9.5px;letter-spacing:.07em;cursor:pointer}
-  .daysel button.on{background:var(--accentDim);color:var(--accent);border-color:var(--accent)}
 
-  /* cardio */
-  .z2{background:var(--card2);border-radius:9px;padding:11px;margin-bottom:12px;
     font-size:12.5px;line-height:1.55;color:var(--muted)}
-  .z2 b{color:var(--bone)}
-  .cardiorow{display:flex;gap:6px;align-items:center;margin-bottom:10px}
-  .cardiorow .fld{flex:0 0 96px}
-  .weekbar{height:7px;background:#131B1F;border-radius:99px;overflow:hidden;margin:8px 0 6px}
-  .weekbar span{display:block;height:100%;background:var(--accent)}
-  .weekno{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);letter-spacing:.06em}
 
   /* setup */
   .setup{background:var(--card);border-radius:12px;padding:14px;margin:6px 0 16px;border:1px solid var(--rule)}
@@ -598,15 +586,13 @@ const KEY_BASE="liftlog:v2";
 const ACTIVE_KEY="liftlog:profile";
 const PROFILES_KEY="liftlog:profiles";
 const keyFor=id=>KEY_BASE+":"+id;
-const WEEK_DEFAULT=["strength","easy","strength","easy","strength","rest","rest"];
-const CARDIO_TARGET=150;
 
 function newId(){return "p_"+Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function defaultDB(planKey){
   return {next:{},history:[],active:null,
           holds: planKey==='nr' ? {rdl:1} : {},
-          cycleStarts:[], week:[...WEEK_DEFAULT], cardio:[],
-          focus:null, injuries:[], cycleAnchor:null};   // anchor() sets this on first use
+          cycleStarts:[],
+          focus:null, injuries:[]};
 }
 
 /* ================= STATE ================= */
@@ -616,7 +602,6 @@ let DB=defaultDB('nr');
 let editIdx=null, preLowEnergy=false, setupOpen=false, altOpen=null;
 let view=1;                 // rotation day 1..3, only meaningful when viewMode==='strength'
 let viewMode='strength';    // strength | easy | rest | history
-let viewSlot=0;             // 0..6, Mon..Sun
 let hydrated=false, dirty=false, storageOK=null;
 
 const store={
@@ -645,15 +630,7 @@ const svChip=()=>storageOK===false
 const today=()=>{const d=new Date();
   return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);};
 const dayDiff=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
-const fmtLocal=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 /* Monday-based weekday index, 0=Mon .. 6=Sun */
-/* The 7-day block is a ROLLING cycle anchored to the day you started it, not Mon–Sun.
-   Start on a Thursday and that Thursday is D1. */
-const anchor=()=>{ if(!DB.cycleAnchor)DB.cycleAnchor=today(); return DB.cycleAnchor };
-const cycleIdx=ds=>{const n=dayDiff(anchor(),ds); return ((n%7)+7)%7};
-const blockStartOf=ds=>addDays(anchor(), Math.floor(dayDiff(anchor(),ds)/7)*7);
-const addDays=(ds,n)=>{const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+n);return fmtLocal(d)};
-const DOW=["D1","D2","D3","D4","D5","D6","D7"];
 
 /* ================= ACTIVE PLAN ================= */
 let PLAN, BW, STD, QMAP, ALL;
@@ -797,11 +774,7 @@ function setActivePlan(){
 }
 
 /* ================= VOLUME ACCOUNTING ================= */
-function weekDays(){
-  const w=weekArr(), out=[];
-  w.forEach((t,i)=>{if(t==='strength'){const d=slotDay(i);if(d)out.push(d)}});
-  return out;
-}
+function weekDays(){ return [1,2,3]; }
 /* Weekly sets per area. Injured exercises count as zero — that is the whole point:
    a hold nobody notices is a hole in the week, not a lift that is merely frozen. */
 function setsForPlan(planObj,skip){
@@ -911,30 +884,8 @@ function openVid(ex){
 }
 
 /* ================= WEEK / CARDIO ================= */
-const weekArr=()=>{ if(!DB.week||DB.week.length!==7)DB.week=[...WEEK_DEFAULT]; return DB.week };
-/* The k-th strength slot of the week maps to rotation day (k%3)+1. */
-function slotDay(i){
-  const w=weekArr(), s=[]; w.forEach((t,j)=>{if(t==='strength')s.push(j)});
-  const pos=s.indexOf(i); return pos<0?null:(pos%3)+1;
-}
-function cardioMins(ds){ return (DB.cardio||[]).filter(c=>c.date===ds).reduce((a,c)=>a+(c.mins||0),0) }
-function cardioDone(ds){ return (DB.cardio||[]).some(c=>c.date===ds) }
-function cycleMinutes(ref){
-  const ws=blockStartOf(ref||today()), we=addDays(ws,6);
-  return (DB.cardio||[]).filter(c=>c.date>=ws&&c.date<=we).reduce((a,c)=>a+(c.mins||0),0);
-}
-/* Suggest a modality from what was trained YESTERDAY. */
-function cardioSuggestion(){
-  const y=addDays(today(),-1);
-  const s=DB.history.filter(h=>h.date===y).pop();
-  if(s&&s.day===2)return "Legs are already cooked from yesterday — keep it a <b>flat walk</b>. No incline, no hills.";
-  if(s)return "You lifted upper body yesterday, so legs are fresh — <b>incline treadmill, bike, or a walk</b> all work.";
-  return "Nothing logged yesterday — <b>incline treadmill, bike, or a walk</b>, whatever you'll actually do.";
-}
-
 /* ================= REST-DAY GATE =================
-   Only STRENGTH sessions live in DB.history; zone 2 is kept in DB.cardio and is
-   deliberately invisible to this gate. A walk yesterday is not a reason to skip lifting. */
+   Only strength sessions are logged, so this gate sees the whole picture. */
 function gate(){
   const last=DB.history[DB.history.length-1];
   if(!last)return{ok:1,msg:"First session. Nothing logged yet."};
@@ -981,34 +932,23 @@ function switcherHTML(){
 }
 function renderWeek(){
   const W=document.getElementById('week');
-  const w=weekArr(), td=today(), tdow=cycleIdx(td), done=cycleDone();
-  W.innerHTML=w.map((t,i)=>{
-    const d=slotDay(i);
-    const lbl = t==='strength' ? (d?PLAN[d].short:'—') : (t==='easy'?'Z2':'REST');
-    const on = viewMode!=='history' && i===viewSlot;
+  const done=cycleDone(), sug=nextDay();
+  W.innerHTML=[1,2,3].map(d=>{
     const cls=['wd'];
-    if(on)cls.push('on');
-    if(i===tdow)cls.push('today');
-    if(t==='rest')cls.push('rest');
-    if(t==='strength'&&d&&done.has(d))cls.push('done');
-    return `<button class="${cls.join(' ')}" data-slot="${i}">${DOW[i]}<small>${lbl}</small></button>`;
+    if(viewMode!=='history' && d===view)cls.push('on');
+    if(done.has(d))cls.push('done');
+    else if(d===sug)cls.push('today');
+    return `<button class="${cls.join(' ')}" data-slot="${d}">DAY ${d}<small>${PLAN[d].short}</small></button>`;
   }).join('');
   const hb=document.getElementById('histBtn');
   if(hb)hb.classList.toggle('on',viewMode==='history');
-}
-function daySelector(){
-  const w=weekArr(), cur=w[viewSlot];
-  const opt=(k,l)=>`<button data-state="${k}" class="${cur===k?'on':''}">${l}</button>`;
-  return `<div class="daysel">${opt('strength','STRENGTH')}${opt('easy','EASY MOVEMENT')}${opt('rest','REST')}</div>`;
 }
 function render(){
   const S=document.getElementById('sess'), L=document.getElementById('list');
   renderProfileBar(); renderWeek();
   if(setupOpen){ S.innerHTML=setupBox(); L.innerHTML=''; wireSetup(); return }
   if(viewMode==='history'){ S.innerHTML=''; L.innerHTML=history(); return }
-  if(viewMode==='easy'){ S.innerHTML=nagHTML()+daySelector()+cardioBox(); L.innerHTML=''; wireDay(); wireCardio(); return }
-  if(viewMode==='rest'){ S.innerHTML=nagHTML()+daySelector()+restBox(); L.innerHTML=''; wireDay(); return }
-  S.innerHTML=nagHTML()+daySelector()+sessBox(); wireDay(); wire();
+  S.innerHTML=nagHTML()+sessBox(); wire();
   L.innerHTML='';
   const A=DB.active, live=A&&A.day===view;
   PLAN[view].blocks.forEach(b=>{
@@ -1021,30 +961,6 @@ function render(){
       L.appendChild(card(shown,ex));
     });
   });
-}
-
-function restBox(){
-  return `<div class="sess"><div class="st"><span class="dot"></span><b>Rest day</b>${svChip()}</div>
-    <p>Nothing scheduled. Rest is the part of the plan that makes the other days work —
-    it is not a day you failed to train.</p></div>`;
-}
-function cardioBox(){
-  const td=today(), mins=cycleMinutes(), pct=Math.min(100,Math.round(mins/CARDIO_TARGET*100));
-  const doneToday=cardioDone(td), todayMins=cardioMins(td);
-  return `<div class="sess ${doneToday?'live':''}">
-    <div class="st"><span class="dot ${doneToday?'go':''}"></span><b>Easy movement · zone 2</b>${svChip()}</div>
-    <div class="z2"><b>Zone 2</b> is nose-breathing pace — you can hold a conversation the whole time,
-      roughly 60–70% of max heart rate. Most people go too hard here; if you are out of breath, slow down.</div>
-    <p>${cardioSuggestion()}</p>
-    <div class="cardiorow">
-      <div class="fld"><label>MINUTES</label>
-        <input type="number" inputmode="numeric" id="cMins" value="${todayMins||''}" placeholder="30"></div>
-      <button class="big" id="cLog" style="flex:1">${doneToday?'UPDATE':'LOG MOVEMENT'}</button>
-    </div>
-    <div class="weekbar"><span style="width:${pct}%"></span></div>
-    <div class="weekno">${mins} / ${CARDIO_TARGET} min this cycle${mins>=CARDIO_TARGET?' · target met':''}</div>
-    ${doneToday?`<button class="anyway" id="cUndo">REMOVE TODAY'S ENTRY</button>`:''}
-  </div>`;
 }
 
 function sessBox(){
@@ -1195,17 +1111,6 @@ function focusPanel(){
     <div class="fsel"><button data-focus="" class="${cur?'':'on'}">NONE</button>${btns}</div>
     ${dx}</div>`;
 }
-function cyclePanel(){
-  const td=today(), i=cycleIdx(td), bs=blockStartOf(td);
-  return `<div class="setup">
-    <div class="st" style="display:flex;align-items:center;gap:9px;margin-bottom:8px">
-      <b style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.13em">PLAN CYCLE</b></div>
-    <p style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:4px">
-      The seven days are a rolling cycle, not Monday to Sunday. Today is <b style="color:var(--bone)">${DOW[i]}</b>,
-      and the current block started ${bs}. Restart it whenever you want D1 to be today.</p>
-    <button class="swadd" id="cycReset" style="width:100%;margin-top:8px">RESTART CYCLE — D1 = TODAY</button>
-  </div>`;
-}
 function injuryPanel(){
   const act=DB.injuries||[];
   const btns=Object.keys(INJURIES).map(k=>{
@@ -1295,7 +1200,7 @@ function setupBox(){
     ${rows}
     <button class="swadd" data-addp="1" style="width:100%;margin-top:12px">+ ADD PROFILE</button>
   </div>`
-  + cyclePanel() + focusPanel() + injuryPanel()
+  + focusPanel() + injuryPanel()
   + `<div class="setup"><button class="anyway" id="setupClose">CLOSE SETUP</button></div>`;
 }
 function wireSetup(){
@@ -1323,11 +1228,6 @@ function wireSetup(){
     if(profile.id===id){ await activateProfile(profiles[0].id); }
     render(); toast(`${p.name} removed · data kept`);
   }));
-  const cr=document.getElementById('cycReset');
-  if(cr)cr.addEventListener('click',()=>{
-    if(!confirm('Restart the cycle so that today becomes D1? Your logged history is untouched.'))return;
-    DB.cycleAnchor=today(); setViewFromSlot(0); save(); render(); toast('Cycle restarted — today is D1');
-  });
   const c=document.getElementById('setupClose');
   if(c)c.addEventListener('click',()=>{setupOpen=false;render()});
 }
@@ -1343,31 +1243,6 @@ async function addProfile(){
 }
 
 /* ================= ACTIONS ================= */
-function wireDay(){
-  document.querySelectorAll('[data-state]').forEach(b=>b.addEventListener('click',()=>{
-    const w=weekArr(), s=b.dataset.state;
-    if(w[viewSlot]===s)return;
-    w[viewSlot]=s; save();
-    setViewFromSlot(viewSlot); render();
-    toast(`${DOW[viewSlot]} set to ${s==='strength'?'strength':s==='easy'?'easy movement':'rest'}`);
-  }));
-}
-function wireCardio(){
-  const b=document.getElementById('cLog');
-  if(b)b.addEventListener('click',()=>{
-    const td=today(), m=Math.max(0,+((document.getElementById('cMins')||{}).value||0));
-    DB.cardio=(DB.cardio||[]).filter(c=>c.date!==td);
-    DB.cardio.push({date:td,mins:m});
-    save();render();
-    toast(m?`Logged ${m} min · ${cycleMinutes()} / ${CARDIO_TARGET} this cycle`:'Movement logged');
-  });
-  const u=document.getElementById('cUndo');
-  if(u)u.addEventListener('click',()=>{
-    const td=today();
-    DB.cardio=(DB.cardio||[]).filter(c=>c.date!==td);
-    save();render();toast('Entry removed');
-  });
-}
 function wire(){
   const s=document.getElementById('start');
   if(s)s.addEventListener('click',()=>{if(gate().ok)begin();else toast('Rest day — see the note above')});
@@ -1456,9 +1331,7 @@ function diag(){
     legacy liftlog:v2: ${sz(KEY_BASE)}<br>
     legacy liftlog:v2:nr: ${sz(keyFor('nr'))}<br>
     legacy liftlog:v2:sa: ${sz(keyFor('sa'))}<br>
-    sessions in memory: ${DB.history.length} · cardio entries: ${(DB.cardio||[]).length}<br>
-    week: ${weekArr().map(t=>t[0].toUpperCase()).join('')}<br>
-    cycle: D1 anchored ${anchor()} · today is ${DOW[cycleIdx(today())]}<br>
+    sessions in memory: ${DB.history.length}<br>
     focus: ${DB.focus||'none'} · injuries: ${(DB.injuries||[]).map(i=>i.key).join(',')||'none'}<br>
     mode: ${standalone}<br>
     origin: ${location.origin}<br>
@@ -1466,12 +1339,8 @@ function diag(){
   </div>`;
 }
 function history(){
-  const mins=cycleMinutes(), pct=Math.min(100,Math.round(mins/CARDIO_TARGET*100));
-  const cardioCard=`<div class="h2">Easy movement</div><div class="hcard">
-    <div class="weekbar"><span style="width:${pct}%"></span></div>
-    <div class="weekno">${mins} / ${CARDIO_TARGET} min this cycle · ${(DB.cardio||[]).length} sessions logged all time</div></div>`;
   if(!DB.history.length)return `<div class="empty">No strength sessions yet.<br>
-    Start a day, log your sets, and end the session — the progression shows up here.</div>`+cardioCard+diag();
+    Start a day, log your sets, and end the session — the progression shows up here.</div>`+diag();
   const histIds=[...new Set(DB.history.flatMap(s=>Object.keys(s.entries)))];
   const rowIds=[...new Set(ALL.map(x=>x.id).concat(histIds))];
   const rows=rowIds.map(id=>{
@@ -1509,7 +1378,6 @@ function history(){
       <span class="v">${s.vol.toLocaleString()} lb</span>
       <button class="mini" data-edit="${i}">EDIT</button></div>`;}).join('');
   return `<div class="h2">Weight progression</div><div class="hcard">${rows}</div>
-    ${cardioCard}
     <div class="h2">Sessions · ${DB.history.length}</div><div class="hcard">${ses}</div>`+diag();
 }
 
@@ -1541,12 +1409,7 @@ document.getElementById('list').addEventListener('change',ev=>{
 
 /* ================= PROFILE SWITCHING ================= */
 function closeSwitcher(){ const sw=document.getElementById('switcher'); if(sw)sw.hidden=true; }
-function setViewFromSlot(i){
-  viewSlot=i;
-  const t=weekArr()[i];
-  if(t==='strength'){ viewMode='strength'; const d=slotDay(i); if(d)view=d; }
-  else viewMode=t;
-}
+function setViewFromSlot(){ viewMode='strength'; view=nextDay(); }
 async function loadDBFor(id,planKey){
   let raw=null; try{ raw=await store.get(keyFor(id)); }catch(e){}
   if(raw){
@@ -1554,10 +1417,10 @@ async function loadDBFor(id,planKey){
       const p=JSON.parse(raw);
       return { next:p.next||{}, history:p.history||[], active:p.active||null,
                holds:p.holds||{}, cycleStarts:p.cycleStarts||[],
-               week:(p.week&&p.week.length===7)?p.week:[...WEEK_DEFAULT],
-               cardio:p.cardio||[],
                focus:p.focus||null, injuries:p.injuries||[],
-               cycleAnchor:p.cycleAnchor||null };
+               /* no longer shown anywhere, but carried through rather than dropped:
+                  deleting them on load would erase them on the next save */
+               week:p.week, cardio:p.cardio, cycleAnchor:p.cycleAnchor };
     }catch(e){}
   }
   return defaultDB(planKey);
@@ -1571,7 +1434,7 @@ async function activateProfile(id){
   DB=await loadDBFor(profile.id, profile.plan);
   setActivePlan();
   editIdx=null; preLowEnergy=false; storageOK=null; altOpen=null;
-  setViewFromSlot(cycleIdx(today()));
+  setViewFromSlot();
   render();
 }
 async function switchProfile(id){
@@ -1585,12 +1448,12 @@ async function switchProfile(id){
 document.getElementById('week').addEventListener('click',e=>{
   const b=e.target.closest('[data-slot]'); if(!b)return;
   setupOpen=false; altOpen=null;
-  setViewFromSlot(+b.dataset.slot);
+  view=+b.dataset.slot; viewMode='strength';
   render(); window.scrollTo({top:0});
 });
 document.getElementById('histBtn').addEventListener('click',()=>{
   setupOpen=false;
-  viewMode = viewMode==='history' ? (weekArr()[viewSlot]==='strength'?'strength':weekArr()[viewSlot]) : 'history';
+  viewMode = viewMode==='history' ? 'strength' : 'history';
   render(); window.scrollTo({top:0});
 });
 document.getElementById('avatarBtn').addEventListener('click',e=>{
@@ -1654,10 +1517,8 @@ document.getElementById('file').addEventListener('change',ev=>{
       }
       DB.next=p.next||{};DB.history=p.history||[];DB.active=p.active||null;DB.holds=p.holds||{};
       DB.cycleStarts=p.cycleStarts||[];
-      DB.week=(p.week&&p.week.length===7)?p.week:[...WEEK_DEFAULT];
-      DB.cardio=p.cardio||[];
       DB.focus=p.focus||null; DB.injuries=p.injuries||[];
-      DB.cycleAnchor=p.cycleAnchor||null;
+      DB.week=p.week; DB.cardio=p.cardio; DB.cycleAnchor=p.cycleAnchor;
       setActivePlan();
       save();render();toast(`Imported ${DB.history.length} session${DB.history.length===1?'':'s'}`);
     }catch(e){toast('That file is not a valid export')}
