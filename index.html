@@ -1155,7 +1155,11 @@ function render(){
       const to = live && A.swaps && A.swaps[ex.id];
       const shown = to ? (ALL.find(x=>x.id===to)||ex) : ex;
       const c=card(shown,ex);
-      if(live)c.classList.add(expanded&&expanded.id===ex.id?'current':(c.classList.contains('done')?'done':'queued'));
+      if(live){
+        const isExpanded=expanded&&expanded.id===ex.id;
+        if(isExpanded){c.classList.remove('done');c.classList.add('current')}
+        else c.classList.add(c.classList.contains('done')?'done':'queued');
+      }
       L.appendChild(c);
     });
   });
