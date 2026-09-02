@@ -1775,6 +1775,26 @@ document.getElementById('wipe').addEventListener('click',()=>{
   save();render();toast('Cleared');
 });
 
+/* iOS can leave the layout viewport scrolled to the bottom when the number
+   keyboard closes. Re-anchor the field the user just finished, but do not
+   interfere when they move directly into another input. */
+let fieldFocusTimer=null;
+document.addEventListener('focusout',e=>{
+  const field=e.target;
+  if(!field.matches||!field.matches('input[type="number"]'))return;
+  clearTimeout(fieldFocusTimer);
+  fieldFocusTimer=setTimeout(()=>{
+    if(document.activeElement&&document.activeElement.matches('input,select,textarea'))return;
+    if(!field.isConnected)return;
+    const r=field.getBoundingClientRect();
+    const sticky=document.querySelector('.sess.live');
+    const visibleTop=sticky?sticky.getBoundingClientRect().bottom+12:12;
+    const visibleBottom=(window.visualViewport?window.visualViewport.height:window.innerHeight)-24;
+    if(r.top<visibleTop||r.bottom>visibleBottom)
+      field.scrollIntoView({behavior:'auto',block:'center',inline:'nearest'});
+  },450);
+});
+
 /* ================= BOOT ================= */
 (async()=>{
   /* 1. legacy single-key record -> :nr  (kept from the previous version, non-destructive) */
