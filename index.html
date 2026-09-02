@@ -234,10 +234,10 @@
   .bar2{display:flex;gap:8px;margin-top:24px}
   .bar2 button{flex:1;min-height:44px;padding:12px 4px;border:1px solid var(--rule);background:transparent;color:var(--muted);
     border-radius:9px;font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;cursor:pointer}
-  .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(90px);
+  .toast{position:fixed;left:12px;right:12px;bottom:20px;margin:auto;width:max-content;opacity:0;visibility:hidden;pointer-events:none;
     background:var(--accent);color:var(--accentText);padding:12px 18px;border-radius:99px;font-weight:600;
-    font-size:13.5px;transition:transform .25s ease;z-index:50;max-width:92vw;text-align:center}
-  .toast.show{transform:translateX(-50%) translateY(0)}
+    font-size:13.5px;transition:opacity .2s ease,visibility .2s ease;z-index:50;max-width:calc(100vw - 24px);text-align:center}
+  .toast.show{opacity:1;visibility:visible}
 
   /* ================= 2026 VISUAL REVAMP ================= */
   :root{
@@ -299,7 +299,7 @@
     margin:0;padding:7px;gap:4px;background:rgba(20,24,22,.92);border:1px solid var(--rule);border-radius:16px;
     box-shadow:0 14px 45px rgba(0,0,0,.48);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
   .bar2 button{border:none;border-radius:10px;min-height:48px;font-size:9px}.bar2 button:first-child{color:var(--bone);background:var(--card2)}
-  .toast{bottom:86px;border-radius:12px;box-shadow:0 12px 35px rgba(0,0,0,.45)}
+  .toast{bottom:calc(86px + env(safe-area-inset-bottom));border-radius:12px;box-shadow:0 12px 35px rgba(0,0,0,.45)}
 
   @media (max-width:480px){
     .profilebar::after{display:none}.profilebar::before{margin-bottom:14px}.wrap{padding:0 12px}
@@ -340,9 +340,10 @@
   .session-progress span{display:block;height:100%;background:var(--accent);border-radius:inherit;transition:width .3s ease}
   body.workout-live .profilebar{display:none}body.workout-live .week{display:none}body.workout-live .histbtn{display:none}
   body.workout-live .bar2{display:none}body.workout-live{padding-top:9px;padding-bottom:34px}
+  body.workout-live .toast{bottom:calc(18px + env(safe-area-inset-bottom))}
   body.workout-live .sess{position:sticky;top:8px;z-index:12;box-shadow:0 15px 45px rgba(0,0,0,.45)}
   body.workout-live .ex.current{border-color:var(--accent);box-shadow:0 15px 42px var(--accentGlow)}
-  body.workout-live .ex.queued,body.workout-live .ex.done{padding:11px 13px;opacity:.66}
+  body.workout-live .ex.queued,body.workout-live .ex.done{padding:11px 13px;opacity:.66;cursor:pointer}
   body.workout-live .ex.queued .row,body.workout-live .ex.queued .lift-aim,body.workout-live .ex.queued .ft,
   body.workout-live .ex.queued .plates,body.workout-live .ex.done .row,body.workout-live .ex.done .lift-aim,
   body.workout-live .ex.done .ft,body.workout-live .ex.done .plates{display:none}
@@ -744,7 +745,7 @@ function defaultDB(planKey){
 let profiles=[];
 let profile=null;           // the active profile OBJECT
 let DB=defaultDB('nr');
-let editIdx=null, preLowEnergy=false, setupOpen=false, altOpen=null, celebration=null;
+let editIdx=null, preLowEnergy=false, setupOpen=false, altOpen=null, celebration=null, focusedExId=null;
 let view=1;                 // rotation day 1..3, only meaningful when viewMode==='strength'
 let viewMode='strength';    // strength | easy | rest | history
 let hydrated=false, dirty=false, storageOK=null;
@@ -1140,16 +1141,18 @@ function render(){
     const loggedId=(A.swaps&&A.swaps[ex.id])||ex.id;
     return !A.entries[loggedId];
   }):null;
+  const focused=live&&focusedExId?visible.find(ex=>ex.id===focusedExId):null;
+  const expanded=focused||current;
   PLAN[view].blocks.forEach(b=>{
     if(live && A.lowEnergy && b.t==='Isolation') return;
     const h=document.createElement('div');h.className='blk';
-    if(current&&b.items.some(x=>x.id===current.id))h.classList.add('current-block');
+    if(expanded&&b.items.some(x=>x.id===expanded.id))h.classList.add('current-block');
     h.innerHTML=`<span>${b.t}</span><i></i>`;L.appendChild(h);
     b.items.forEach(ex=>{
       const to = live && A.swaps && A.swaps[ex.id];
       const shown = to ? (ALL.find(x=>x.id===to)||ex) : ex;
       const c=card(shown,ex);
-      if(live)c.classList.add(c.classList.contains('done')?'done':(current&&current.id===ex.id?'current':'queued'));
+      if(live)c.classList.add(expanded&&expanded.id===ex.id?'current':(c.classList.contains('done')?'done':'queued'));
       L.appendChild(c);
     });
   });
@@ -1269,6 +1272,17 @@ function card(ex,orig){
     toast(to?`Swapped to ${(ALL.find(x=>x.id===to)||{}).n} for this session`:`Back to ${orig.n}`);
   }));
   el.querySelector('[data-log]').addEventListener('click',()=>logEx(ex,orig));
+  el.addEventListener('click',e=>{
+    if(!live||!el.classList.contains('queued')&&!el.classList.contains('done'))return;
+    if(e.target.closest('button,input,a,select'))return;
+    focusedExId=orig.id;
+    render();
+    requestAnimationFrame(()=>{
+      const opened=document.querySelector(`.ex[data-exercise="${orig.id}"]`);
+      if(opened)opened.scrollIntoView({behavior:'smooth',block:'center'});
+    });
+  });
+  el.dataset.exercise=orig.id;
   return el;
 }
 function badgeLive(ex,w){const s=STD[ex.id];if(!s)return badge(ex);
@@ -1475,6 +1489,7 @@ function wire(){
 }
 function begin(){
   celebration=null;
+  focusedExId=null;
   DB.active={day:view,date:today(),started:Date.now(),entries:{},lowEnergy:preLowEnergy};
   preLowEnergy=false;
   save();render();toast(`${PLAN[view].name} started`);
@@ -1487,6 +1502,7 @@ function logEx(ex,orig){
   if(reps.some(r=>r==null)){toast(`Fill all ${setCount} sets`);return}
   const w=+(document.getElementById('w_'+ex.id).value||0);
   DB.active.entries[ex.id]={w,reps};      // overwrite, never compounds
+  focusedExId=null;
   save();render();
   toast(`${ex.n} saved — tap LOG again to correct it`);
 }
@@ -1496,6 +1512,7 @@ function reopen(){
   DB.history.pop();
   Object.entries(last.entries).forEach(([id,e])=>{DB.next[id]=e.w});
   DB.active={day:last.day,date:last.date,started:Date.now(),entries:last.entries,lowEnergy:!!last.lowEnergy};
+  focusedExId=null;
   view=last.day;save();render();window.scrollTo({top:0});
   toast(`${PLAN[last.day].name} reopened — finish and close it again`);
 }
@@ -1756,6 +1773,26 @@ document.getElementById('wipe').addEventListener('click',()=>{
   if(!confirm(`Erase all history, progression and the open session for ${profile.name}? Other profiles are untouched.`))return;
   DB=defaultDB(profile.plan); DB.holds={};   // a manual reset clears seeded holds too
   save();render();toast('Cleared');
+});
+
+/* iOS can leave the layout viewport scrolled to the bottom when the number
+   keyboard closes. Re-anchor the field the user just finished, but do not
+   interfere when they move directly into another input. */
+let fieldFocusTimer=null;
+document.addEventListener('focusout',e=>{
+  const field=e.target;
+  if(!field.matches||!field.matches('input[type="number"]'))return;
+  clearTimeout(fieldFocusTimer);
+  fieldFocusTimer=setTimeout(()=>{
+    if(document.activeElement&&document.activeElement.matches('input,select,textarea'))return;
+    if(!field.isConnected)return;
+    const r=field.getBoundingClientRect();
+    const sticky=document.querySelector('.sess.live');
+    const visibleTop=sticky?sticky.getBoundingClientRect().bottom+12:12;
+    const visibleBottom=(window.visualViewport?window.visualViewport.height:window.innerHeight)-24;
+    if(r.top<visibleTop||r.bottom>visibleBottom)
+      field.scrollIntoView({behavior:'auto',block:'center',inline:'nearest'});
+  },450);
 });
 
 /* ================= BOOT ================= */
