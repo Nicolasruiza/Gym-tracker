@@ -234,10 +234,10 @@
   .bar2{display:flex;gap:8px;margin-top:24px}
   .bar2 button{flex:1;min-height:44px;padding:12px 4px;border:1px solid var(--rule);background:transparent;color:var(--muted);
     border-radius:9px;font-family:"IBM Plex Mono",monospace;font-size:9.5px;letter-spacing:.1em;cursor:pointer}
-  .toast{position:fixed;left:12px;right:12px;bottom:20px;margin:auto;width:max-content;opacity:0;visibility:hidden;pointer-events:none;
+  .toast{display:none;position:fixed;left:0;right:0;bottom:20px;margin:auto;width:calc(100% - 32px);max-width:420px;pointer-events:none;
     background:var(--accent);color:var(--accentText);padding:12px 18px;border-radius:99px;font-weight:600;
-    font-size:13.5px;transition:opacity .2s ease,visibility .2s ease;z-index:50;max-width:calc(100vw - 24px);text-align:center}
-  .toast.show{opacity:1;visibility:visible}
+    font-size:13.5px;z-index:50;text-align:center}
+  .toast.show{display:block}
 
   /* ================= 2026 VISUAL REVAMP ================= */
   :root{
@@ -282,7 +282,8 @@
   .sess .st b{font-size:12px}.sess p{font-size:14px}.big{min-height:58px;border-radius:12px;font-size:23px}
   .live-stats{padding:11px 0 3px}.live-stats b{font-size:25px}
   .blk{margin:26px 2px 10px;font-size:9px;color:#AAB4AE}
-  .ex{padding:16px;margin-bottom:11px}.ex.key{box-shadow:inset 3px 0 0 var(--accent)}
+  .ex{position:relative;padding:16px;margin-bottom:11px}.ex.key{box-shadow:inset 3px 0 0 var(--accent)}
+  .expand-hit{display:none}
   .top{margin-bottom:14px}.top h3{font-size:16px}.tgt{font-size:16px;color:var(--accent)}
   .vid,.altbtn{background:#242B27;border:1px solid var(--rule);border-radius:11px}
   .row{gap:8px}.fld{flex:1 1 0;min-width:0}.fld.grow{flex:1.25 1 0}
@@ -350,6 +351,8 @@
   body.workout-live .ex.queued .top,body.workout-live .ex.done .top{margin:0;align-items:center}
   body.workout-live .ex.queued .top h3,body.workout-live .ex.done .top h3{font-size:13px}
   body.workout-live .ex.queued .vid,body.workout-live .ex.queued .altbtn,body.workout-live .ex.done .vid,body.workout-live .ex.done .altbtn{display:none}
+  body.workout-live .ex.queued .expand-hit,body.workout-live .ex.done .expand-hit{display:block;position:absolute;inset:0;
+    width:100%;height:100%;padding:0;border:0;border-radius:inherit;background:transparent;cursor:pointer;z-index:3}
   body.workout-live .ex.done{border-color:var(--accentBorder)}body.workout-live .ex.done::after{content:"COMPLETED";float:right;
     margin-top:-20px;font-family:"IBM Plex Mono",monospace;font-size:7px;letter-spacing:.1em;color:var(--accent)}
   body.workout-live .blk{display:none}body.workout-live .blk.current-block{display:flex;margin-top:18px}
@@ -999,8 +1002,8 @@ function applyAccent(){
 const wOf=ex=>DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;
 const lastOf=id=>{for(let i=DB.history.length-1;i>=0;i--){const e=DB.history[i].entries[id];
   if(e)return{...e,date:DB.history[i].date}}return null};
-const toast=m=>{const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
-  clearTimeout(t._x);t._x=setTimeout(()=>t.classList.remove('show'),2800)};
+const toast=m=>{if(!m)return;const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
+  clearTimeout(t._x);t._x=setTimeout(()=>{t.classList.remove('show');t.textContent=''},2800)};
 
 const eff=(ex,w)=>(w==null?wOf(ex):w)*(ex.mult||1);
 function badge(ex,raw){
@@ -1236,7 +1239,8 @@ function card(ex,orig){
    </div>
    ${ex.bar?`<div class="plates" id="pl_${ex.id}">${plateLine(ex,w)}</div>`:''}
    ${ex.mult?`<div class="plates" id="mu_${ex.id}"><span class="bar45">dual cable ·</span> <span class="pl">${w*ex.mult} lb</span> <span class="bar45">actually moving</span></div>`:''}
-   <div class="ft">${foot(ex)}</div>`;
+   <div class="ft">${foot(ex)}</div>
+   <button type="button" class="expand-hit" data-expand="${orig.id}" aria-label="Open ${orig.n}"></button>`;
 
   const wIn=el.querySelector('#w_'+ex.id);
   wIn.addEventListener('input',()=>{
@@ -1272,9 +1276,8 @@ function card(ex,orig){
     toast(to?`Swapped to ${(ALL.find(x=>x.id===to)||{}).n} for this session`:`Back to ${orig.n}`);
   }));
   el.querySelector('[data-log]').addEventListener('click',()=>logEx(ex,orig));
-  el.addEventListener('click',e=>{
-    if(!live||!el.classList.contains('queued')&&!el.classList.contains('done'))return;
-    if(e.target.closest('button,input,a,select'))return;
+  el.querySelector('[data-expand]').addEventListener('click',()=>{
+    if(!live)return;
     focusedExId=orig.id;
     render();
     requestAnimationFrame(()=>{
