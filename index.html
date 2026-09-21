@@ -999,9 +999,23 @@ function applyAccent(){
   s.setProperty('--accentGlow', `rgba(${c[0]},${c[1]},${c[2]},.2)`);
 }
 
-const wOf=ex=>DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;
 const lastOf=id=>{for(let i=DB.history.length-1;i>=0;i--){const e=DB.history[i].entries[id];
   if(e)return{...e,date:DB.history[i].date}}return null};
+const INVERSE_LOAD_IDS=new Set(['alt_assist_pullup','alt_assist_pullup2']);
+const inverseLoad=ex=>!!(ex&&INVERSE_LOAD_IDS.has(ex.id));
+const progressedWeight=(ex,w)=>inverseLoad(ex)?Math.max(0,w-ex.inc):w+ex.inc;
+const wOf=ex=>{
+  const next=DB.next[ex.id];
+  /* Repair an already-saved target produced by the old assisted-pull-up bug. */
+  if(inverseLoad(ex)&&next!=null&&ex.inc){
+    const l=lastOf(ex.id);
+    if(l&&next===l.w+ex.inc){
+      DB.next[ex.id]=Math.max(0,l.w-ex.inc);
+      return DB.next[ex.id];
+    }
+  }
+  return next!=null?next:ex.w;
+};
 const toast=m=>{if(!m)return;const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');
   clearTimeout(t._x);t._x=setTimeout(()=>{t.classList.remove('show');t.textContent=''},2800)};
 
@@ -1089,7 +1103,7 @@ function completionBox(){
   const c=celebration;
   return `<div class="complete-card">
     <div class="complete-mark">✓</div><div class="eyebrow">Workout complete</div>
-    <h2>${c.name} — done.</h2><p>${c.ups?`${c.ups} lift${c.ups===1?'':'s'} earned a heavier target next time.`:'Consistency banked. The next session is ready when you are.'}</p>
+    <h2>${c.name} — done.</h2><p>${c.ups?`${c.ups} lift${c.ups===1?'':'s'} earned progression next time.`:'Consistency banked. The next session is ready when you are.'}</p>
     <div class="complete-grid"><div><b>${c.exercises}</b><small>EXERCISES</small></div>
       <div><b>${c.volume.toLocaleString()}</b><small>LB VOLUME</small></div><div><b>${c.minutes}</b><small>MINUTES</small></div></div>
     <button class="big" id="celebrateDone">SEE WHAT'S NEXT</button></div>`;
@@ -1309,7 +1323,7 @@ function foot(ex){
   /* a 2-set low-energy entry never earns the up-arrow, since progression was frozen */
   const hit=l.reps.length>=3&&l.reps.every(r=>r>=ex.r);
   return holdUI+`<span class="pill">last ${l.date.slice(5)} · ${l.w||'BW'} × ${l.reps.join('/')}</span>`
-   +(held?'':(hit?`<span class="pill up">↑ now ${wOf(ex)} lb</span>`
+   +(held?'':(hit?`<span class="pill up">${inverseLoad(ex)?'↓':'↑'} now ${wOf(ex)} lb</span>`
         :`<span class="pill hold">hold ${wOf(ex)} until ${ex.sets||3} × ${ex.r}</span>`));
 }
 
@@ -1532,7 +1546,7 @@ function endSession(){
     if(!ex)return;
     const hit=e.reps.length>0&&e.reps.every(r=>r>=ex.r);
     const held=(DB.holds&&DB.holds[id])||A.lowEnergy;   // low-energy freezes progression, same as a hold
-    DB.next[id]=(hit&&ex.inc&&!held)?e.w+ex.inc:e.w;    // applied ONCE, here
+    DB.next[id]=(hit&&ex.inc&&!held)?progressedWeight(ex,e.w):e.w;    // applied ONCE, here
     if(hit&&ex.inc&&!held)ups.push(ex.n);
   });
   let vol=0;ids.forEach(id=>{vol+=volOf(id,A.entries[id].w,A.entries[id].reps)});
@@ -1542,7 +1556,7 @@ function endSession(){
     minutes:Math.max(1,Math.round((Date.now()-(A.started||Date.now()))/60000))};
   DB.active=null;save();render();
   toast(A.lowEnergy?'Session closed · low energy day, no progression'
-    :(ups.length?`Session closed · ${ups.length} lift${ups.length>1?'s':''} moved up`:'Session closed'));
+    :(ups.length?`Session closed · ${ups.length} lift${ups.length>1?'s':''} progressed`:'Session closed'));
 }
 
 /* ================= HISTORY ================= */
