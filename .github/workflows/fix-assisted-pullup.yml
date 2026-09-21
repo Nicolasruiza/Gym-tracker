@@ -18,45 +18,21 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
-
           path = Path('index.html')
           s = path.read_text()
-
-          def replace_once(old, new):
-              global s
+          pairs = [
+              ('{id:"alt_assist_pullup",n:"Assisted pull-up machine",frac:.30,inc:5}', '{id:"alt_assist_pullup",n:"Assisted pull-up machine",frac:.30,inc:5,inverse:1}'),
+              ('{id:"alt_assist_pullup2",n:"Assisted pull-up machine",frac:.30,inc:5}', '{id:"alt_assist_pullup2",n:"Assisted pull-up machine",frac:.30,inc:5,inverse:1}'),
+              ('const wOf=ex=>DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;', 'const wOf=ex=>{\\n  const next=DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;\\n  if(!ex.inverse)return next;\\n  const l=lastOf(ex.id); if(!l)return next;\\n  const hit=l.reps.length>=3&&l.reps.every(r=>r>=ex.r);\\n  return (hit&&next>l.w)?Math.max(0,l.w-ex.inc):next;\\n};'),
+              ('DB.next[id]=(hit&&ex.inc&&!held)?e.w+ex.inc:e.w;    // applied ONCE, here', 'DB.next[id]=(hit&&ex.inc&&!held)?Math.max(0,e.w+(ex.inverse?-ex.inc:ex.inc)):e.w;    // applied ONCE, here'),
+              ('`<span class="pill up">↑ now ${wOf(ex)} lb</span>`', '`<span class="pill up">${ex.inverse?\'↓\':\'↑\'} now ${wOf(ex)} lb</span>`'),
+              ('earned a heavier target next time.', 'earned a harder target next time.'),
+              ("moved up`:'Session closed'", "progressed`:'Session closed'")
+          ]
+          for old, new in pairs:
               if old not in s:
-                  raise SystemExit(f'Expected source pattern not found: {old[:100]}')
+                  raise SystemExit('Expected source pattern not found: ' + old[:100])
               s = s.replace(old, new, 1)
-
-          replace_once(
-              '{id:"alt_assist_pullup",n:"Assisted pull-up machine",frac:.30,inc:5}',
-              '{id:"alt_assist_pullup",n:"Assisted pull-up machine",frac:.30,inc:5,inverse:1}'
-          )
-          replace_once(
-              '{id:"alt_assist_pullup2",n:"Assisted pull-up machine",frac:.30,inc:5}',
-              '{id:"alt_assist_pullup2",n:"Assisted pull-up machine",frac:.30,inc:5,inverse:1}'
-          )
-          replace_once(
-              'const wOf=ex=>DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;',
-              '''const wOf=ex=>{
-  const next=DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;
-  if(!ex.inverse)return next;
-  const l=lastOf(ex.id); if(!l)return next;
-  const hit=l.reps.length>=3&&l.reps.every(r=>r>=ex.r);
-  return (hit&&next>l.w)?Math.max(0,l.w-ex.inc):next;
-};'''
-          )
-          replace_once(
-              'DB.next[id]=(hit&&ex.inc&&!held)?e.w+ex.inc:e.w;    // applied ONCE, here',
-              'DB.next[id]=(hit&&ex.inc&&!held)?Math.max(0,e.w+(ex.inverse?-ex.inc:ex.inc)):e.w;    // applied ONCE, here'
-          )
-          replace_once(
-              '`<span class="pill up">↑ now ${wOf(ex)} lb</span>`',
-              '`<span class="pill up">${ex.inverse?\'↓\':\'↑\'} now ${wOf(ex)} lb</span>`'
-          )
-          replace_once('earned a heavier target next time.', 'earned a harder target next time.')
-          replace_once("moved up`:'Session closed'", "progressed`:'Session closed'")
-
           path.write_text(s)
           PY
       - name: Commit fix
