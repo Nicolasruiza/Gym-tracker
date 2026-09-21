@@ -22,27 +22,40 @@ jobs:
           path = Path('index.html')
           s = path.read_text()
 
-          replacements = [
-              ('{id:"alt_assist_pullup",n:"Assisted pull-up machine",frac:.30,inc:5}',
-               '{id:"alt_assist_pullup",n:"Assisted pull-up machine",frac:.30,inc:5,inverse:1}'),
-              ('{id:"alt_assist_pullup2",n:"Assisted pull-up machine",frac:.30,inc:5}',
-               '{id:"alt_assist_pullup2",n:"Assisted pull-up machine",frac:.30,inc:5,inverse:1}'),
-              ('const wOf=ex=>DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;\nconst lastOf=id=>{for(let i=DB.history.length-1;i>=0;i--){const e=DB.history[i].entries[id];\n  if(e)return{...e,date:DB.history[i].date}}return null};',
-               'const lastOf=id=>{for(let i=DB.history.length-1;i>=0;i--){const e=DB.history[i].entries[id];\n  if(e)return{...e,date:DB.history[i].date}}return null};\nconst wOf=ex=>{\n  const next=DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;\n  if(!ex.inverse)return next;\n  const l=lastOf(ex.id); if(!l)return next;\n  const hit=l.reps.length>=3&&l.reps.every(r=>r>=ex.r);\n  return (hit&&next>l.w)?Math.max(0,l.w-ex.inc):next;\n};'),
-              ('DB.next[id]=(hit&&ex.inc&&!held)?e.w+ex.inc:e.w;    // applied ONCE, here',
-               'DB.next[id]=(hit&&ex.inc&&!held)?Math.max(0,e.w+(ex.inverse?-ex.inc:ex.inc)):e.w;    // applied ONCE, here'),
-              ("+(held?'':(hit?`<span class=\"pill up\">↑ now ${wOf(ex)} lb</span>`",
-               "+(held?'':(hit?`<span class=\"pill up\">${ex.inverse?'↓':'↑'} now ${wOf(ex)} lb</span>`"),
-              ("<h2>${c.name} — done.</h2><p>${c.ups?`${c.ups} lift${c.ups===1?'':'s'} earned a heavier target next time.`:'Consistency banked. The next session is ready when you are.'}</p>",
-               "<h2>${c.name} — done.</h2><p>${c.ups?`${c.ups} lift${c.ups===1?'':'s'} earned a harder target next time.`:'Consistency banked. The next session is ready when you are.'}</p>"),
-              (":(ups.length?`Session closed · ${ups.length} lift${ups.length>1?'s':''} moved up`:'Session closed'));",
-               ":(ups.length?`Session closed · ${ups.length} lift${ups.length>1?'s':''} progressed`:'Session closed'));")
-          ]
-
-          for old, new in replacements:
+          def replace_once(old, new):
+              global s
               if old not in s:
-                  raise SystemExit(f'Expected source pattern not found: {old[:90]}')
+                  raise SystemExit(f'Expected source pattern not found: {old[:100]}')
               s = s.replace(old, new, 1)
+
+          replace_once(
+              '{id:"alt_assist_pullup",n:"Assisted pull-up machine",frac:.30,inc:5}',
+              '{id:"alt_assist_pullup",n:"Assisted pull-up machine",frac:.30,inc:5,inverse:1}'
+          )
+          replace_once(
+              '{id:"alt_assist_pullup2",n:"Assisted pull-up machine",frac:.30,inc:5}',
+              '{id:"alt_assist_pullup2",n:"Assisted pull-up machine",frac:.30,inc:5,inverse:1}'
+          )
+          replace_once(
+              'const wOf=ex=>DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;',
+              '''const wOf=ex=>{
+  const next=DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;
+  if(!ex.inverse)return next;
+  const l=lastOf(ex.id); if(!l)return next;
+  const hit=l.reps.length>=3&&l.reps.every(r=>r>=ex.r);
+  return (hit&&next>l.w)?Math.max(0,l.w-ex.inc):next;
+};'''
+          )
+          replace_once(
+              'DB.next[id]=(hit&&ex.inc&&!held)?e.w+ex.inc:e.w;    // applied ONCE, here',
+              'DB.next[id]=(hit&&ex.inc&&!held)?Math.max(0,e.w+(ex.inverse?-ex.inc:ex.inc)):e.w;    // applied ONCE, here'
+          )
+          replace_once(
+              '`<span class="pill up">↑ now ${wOf(ex)} lb</span>`',
+              '`<span class="pill up">${ex.inverse?\'↓\':\'↑\'} now ${wOf(ex)} lb</span>`'
+          )
+          replace_once('earned a heavier target next time.', 'earned a harder target next time.')
+          replace_once("moved up`:'Session closed'", "progressed`:'Session closed'")
 
           path.write_text(s)
           PY
