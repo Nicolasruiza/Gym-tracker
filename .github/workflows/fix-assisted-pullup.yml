@@ -1,0 +1,57 @@
+name: Fix assisted pull-up progression
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-assisted-pullup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch inverse progression
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('index.html')
+          s = path.read_text()
+
+          replacements = [
+              ('{id:"alt_assist_pullup",n:"Assisted pull-up machine",frac:.30,inc:5}',
+               '{id:"alt_assist_pullup",n:"Assisted pull-up machine",frac:.30,inc:5,inverse:1}'),
+              ('{id:"alt_assist_pullup2",n:"Assisted pull-up machine",frac:.30,inc:5}',
+               '{id:"alt_assist_pullup2",n:"Assisted pull-up machine",frac:.30,inc:5,inverse:1}'),
+              ('const wOf=ex=>DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;\nconst lastOf=id=>{for(let i=DB.history.length-1;i>=0;i--){const e=DB.history[i].entries[id];\n  if(e)return{...e,date:DB.history[i].date}}return null};',
+               'const lastOf=id=>{for(let i=DB.history.length-1;i>=0;i--){const e=DB.history[i].entries[id];\n  if(e)return{...e,date:DB.history[i].date}}return null};\nconst wOf=ex=>{\n  const next=DB.next[ex.id]!=null?DB.next[ex.id]:ex.w;\n  if(!ex.inverse)return next;\n  const l=lastOf(ex.id); if(!l)return next;\n  const hit=l.reps.length>=3&&l.reps.every(r=>r>=ex.r);\n  return (hit&&next>l.w)?Math.max(0,l.w-ex.inc):next;\n};'),
+              ('DB.next[id]=(hit&&ex.inc&&!held)?e.w+ex.inc:e.w;    // applied ONCE, here',
+               'DB.next[id]=(hit&&ex.inc&&!held)?Math.max(0,e.w+(ex.inverse?-ex.inc:ex.inc)):e.w;    // applied ONCE, here'),
+              ("+(held?'':(hit?`<span class=\"pill up\">↑ now ${wOf(ex)} lb</span>`",
+               "+(held?'':(hit?`<span class=\"pill up\">${ex.inverse?'↓':'↑'} now ${wOf(ex)} lb</span>`"),
+              ("<h2>${c.name} — done.</h2><p>${c.ups?`${c.ups} lift${c.ups===1?'':'s'} earned a heavier target next time.`:'Consistency banked. The next session is ready when you are.'}</p>",
+               "<h2>${c.name} — done.</h2><p>${c.ups?`${c.ups} lift${c.ups===1?'':'s'} earned a harder target next time.`:'Consistency banked. The next session is ready when you are.'}</p>"),
+              (":(ups.length?`Session closed · ${ups.length} lift${ups.length>1?'s':''} moved up`:'Session closed'));",
+               ":(ups.length?`Session closed · ${ups.length} lift${ups.length>1?'s':''} progressed`:'Session closed'));")
+          ]
+
+          for old, new in replacements:
+              if old not in s:
+                  raise SystemExit(f'Expected source pattern not found: {old[:90]}')
+              s = s.replace(old, new, 1)
+
+          path.write_text(s)
+          PY
+      - name: Commit fix
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix assisted pull-up inverse progression"
+          git push
