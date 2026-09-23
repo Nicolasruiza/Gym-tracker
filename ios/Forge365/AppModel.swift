@@ -28,7 +28,7 @@ final class AppModel: ObservableObject {
     }
 
     var recommendedTrainingDay: TrainingDay {
-        training.nextDay
+        training.activeWorkout?.day ?? training.nextDay
     }
 
     var nutritionTargets: NutritionTargets? {
@@ -61,7 +61,8 @@ final class AppModel: ObservableObject {
             let analysis = try LiftLogImporter.parse(data: data)
             liftLogAnalysis = analysis
             liftLogImportError = nil
-            if let recommended = analysis.recommendedNextDay {
+            training.seedNextWeights(LiftLogWeightImporter.nextWeights(from: data))
+            if let recommended = analysis.recommendedNextDay, training.activeWorkout == nil {
                 training.setNextDay(recommended)
             }
             rebuildPlan()
@@ -70,12 +71,31 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func completeCurrentStrengthSession() {
-        training.complete(recommendedTrainingDay)
+    func startTodayWorkout() {
+        training.startWorkout(day: training.nextDay)
         rebuildPlan()
     }
 
+    func finishActiveStrengthWorkout() {
+        training.finishActiveWorkout()
+        rebuildPlan()
+    }
+
+    func cancelActiveStrengthWorkout() {
+        training.cancelActiveWorkout()
+        rebuildPlan()
+    }
+
+    func completeCurrentStrengthSession() {
+        if training.activeWorkout == nil {
+            startTodayWorkout()
+        } else if training.canFinishActiveWorkout {
+            finishActiveStrengthWorkout()
+        }
+    }
+
     func chooseNextTrainingDay(_ day: TrainingDay) {
+        guard training.activeWorkout == nil else { return }
         training.setNextDay(day)
         rebuildPlan()
     }
