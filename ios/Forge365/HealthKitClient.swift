@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import HealthKit
 
 @MainActor
@@ -39,8 +40,8 @@ final class HealthKitClient: ObservableObject {
         async let workouts = loadWorkouts(days: 14)
         async let sleep = loadSleepSummary(days: 8)
         async let steps = loadStepsToday()
-        async let restingHR = loadLatestQuantity(type: restingHRType, unit: HKUnit.count().unitDivided(by: .minute()))
-        async let hrv = loadLatestQuantity(type: hrvType, unit: .secondUnit(with: .milli))
+        async let restingHR = loadLatestQuantity(type: restingHRType, unit: HKUnit.count().unitDivided(by: HKUnit.minute()))
+        async let hrv = loadLatestQuantity(type: hrvType, unit: HKUnit.secondUnit(with: .milli))
 
         return await HealthSnapshot(
             workouts: workouts,
@@ -88,7 +89,7 @@ final class HealthKitClient: ObservableObject {
 
         return await withCheckedContinuation { continuation in
             let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
-                let total = result?.sumQuantity()?.doubleValue(for: .count()) ?? 0
+                let total = result?.sumQuantity()?.doubleValue(for: HKUnit.count()) ?? 0
                 continuation.resume(returning: Int(total.rounded()))
             }
             store.execute(query)
@@ -124,12 +125,15 @@ final class HealthKitClient: ObservableObject {
         let asleepSamples = samples.filter { Self.isAsleepValue($0.value) }
         guard !asleepSamples.isEmpty else { return .empty }
 
-        // HealthKit can contain overlapping sleep records from multiple sources.
-        // Prefer the source with the largest amount of recent asleep time to avoid double-counting.
         let grouped = Dictionary(grouping: asleepSamples) { $0.sourceRevision.source.bundleIdentifier }
-        let selected = grouped.values.max { lhs, rhs in
+        let selected: [HKCategorySample]
+        if let bestSourceSamples = grouped.values.max(by: { lhs, rhs in
             Self.mergedDuration(lhs) < Self.mergedDuration(rhs)
-        }.map(Array.init) ?? asleepSamples
+        }) {
+            selected = Array(bestSourceSamples)
+        } else {
+            selected = asleepSamples
+        }
 
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
@@ -148,9 +152,8 @@ final class HealthKitClient: ObservableObject {
         let lastNight = nightlyHours.first ?? 0
         let average = nightlyHours.isEmpty ? 0 : nightlyHours.reduce(0, +) / Double(nightlyHours.count)
 
-        guard let lastAnchor = calendar.date(byAdding: .day, value: 0, to: today),
-              let lastStart = calendar.date(byAdding: .hour, value: -12, to: lastAnchor),
-              let lastEnd = calendar.date(byAdding: .hour, value: 12, to: lastAnchor) else {
+        guard let lastStart = calendar.date(byAdding: .hour, value: -12, to: today),
+              let lastEnd = calendar.date(byAdding: .hour, value: 12, to: today) else {
             return SleepSummary(lastNightHours: lastNight, sevenDayAverageHours: average, deepHours: 0, remHours: 0)
         }
 
