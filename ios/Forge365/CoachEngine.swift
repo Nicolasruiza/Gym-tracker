@@ -1,11 +1,63 @@
 import Foundation
 
+struct NutritionTargets: Hashable {
+    let calories: Int
+    let proteinG: Int
+    let carbsG: Int
+    let fatG: Int
+    let saturatedFatMaxG: Int
+    let fiberMinG: Int
+    let calibrationSource: String
+
+    var macroLine: String {
+        "\(calories) kcal · \(proteinG)P · \(carbsG)C · \(fatG)F"
+    }
+}
+
+struct NutritionEngine {
+    static func makeTargets(bodyWeightKg: Double?, averageDailyEnergyBurned: Double?) -> NutritionTargets? {
+        guard let weight = bodyWeightKg, weight >= 40, weight <= 250 else { return nil }
+
+        let calories: Int
+        let source: String
+        if let expenditure = averageDailyEnergyBurned, expenditure >= 1_400, expenditure <= 6_000 {
+            calories = roundTo50(expenditure * 0.95)
+            source = "Apple Health 7-day energy estimate · initial calibration"
+        } else {
+            calories = roundTo50(weight * 28.0)
+            source = "Body-weight estimate · initial calibration"
+        }
+
+        let protein = Int((weight * 1.8).rounded())
+        let fat = Int((weight * 0.8).rounded())
+        let remainingCalories = max(400, calories - (protein * 4) - (fat * 9))
+        let carbs = Int((Double(remainingCalories) / 4.0).rounded())
+        let saturatedFat = max(8, Int(floor((Double(calories) * 0.06) / 9.0)))
+        let fiber = max(25, Int((Double(calories) / 1_000.0 * 14.0).rounded()))
+
+        return NutritionTargets(
+            calories: calories,
+            proteinG: protein,
+            carbsG: carbs,
+            fatG: fat,
+            saturatedFatMaxG: saturatedFat,
+            fiberMinG: fiber,
+            calibrationSource: source
+        )
+    }
+
+    private static func roundTo50(_ value: Double) -> Int {
+        Int((value / 50.0).rounded() * 50.0)
+    }
+}
+
 struct CoachEngine {
     static func makePlan(
         snapshot: HealthSnapshot,
         nextTrainingDay: TrainingDay,
         profile: CoachProfile,
-        liftLog: LiftLogAnalysis? = nil
+        liftLog: LiftLogAnalysis? = nil,
+        nutrition: NutritionTargets? = nil
     ) -> DailyPlan {
         let sleep = snapshot.sleep
         let cardioMinutes = snapshot.cardioMinutesLast7Days
@@ -58,8 +110,15 @@ struct CoachEngine {
             sleepDetail = "Last night: \(sleep.lastNightHours.formatted(.number.precision(.fractionLength(1)))) h · 7-day avg: \(sleep.sevenDayAverageHours.formatted(.number.precision(.fractionLength(1)))) h. Keep the schedule consistent."
         }
 
-        let nutritionTitle = "Nutrition calibration"
-        let nutritionDetail = "Next: calories and protein anchored to body trend, with carbs allocated around training rather than treated as mandatory or forbidden."
+        let nutritionTitle: String
+        let nutritionDetail: String
+        if let nutrition {
+            nutritionTitle = nutrition.macroLine
+            nutritionDetail = "Protein first; carbs are available to support training, not mandatory or forbidden. Keep saturated fat around ≤\(nutrition.saturatedFatMaxG) g and fiber ≥\(nutrition.fiberMinG) g while Forge calibrates against your real trend."
+        } else {
+            nutritionTitle = "Nutrition calibration"
+            nutritionDetail = "Log body weight in Apple Health so Forge can create the first protein/macro target, then calibrate it from your real trend."
+        }
 
         var reasons = [
             "\(strengthSessions) strength workout(s) detected in Health over the last 7 days.",
@@ -71,6 +130,9 @@ struct CoachEngine {
             if let deficit = topDeficit {
                 reasons.append("Largest muscle-volume gap: \(deficit.muscle.label) at \(deficit.effectiveSets.formatted(.number.precision(.fractionLength(1)))) / \(deficit.targetSets.formatted(.number.precision(.fractionLength(0)))) effective sets this week.")
             }
+        }
+        if let nutrition {
+            reasons.append("Nutrition starts from \(nutrition.calibrationSource.lowercased()) and is meant to be corrected by weight/waist/performance trends.")
         }
         if sleep.lastNightHours > 0 {
             reasons.append("Last-night sleep: \(sleep.lastNightHours.formatted(.number.precision(.fractionLength(1)))) h; 7-day average: \(sleep.sevenDayAverageHours.formatted(.number.precision(.fractionLength(1)))) h.")
