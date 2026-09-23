@@ -12,7 +12,7 @@ struct CoachEngine {
         let strengthSessions = snapshot.strengthSessionsLast7Days
         let lowRecovery = sleep.lastNightHours > 0 && sleep.lastNightHours < 6.0
         let belowSleepTrend = sleep.sevenDayAverageHours > 0 && sleep.sevenDayAverageHours < 7.0
-        let recommendedDay = liftLog?.recommendedNextDay ?? nextTrainingDay
+        let recommendedDay = nextTrainingDay
         let topDeficit = liftLog?.topDeficit
 
         let trainingTitle = recommendedDay.rawValue
@@ -23,10 +23,7 @@ struct CoachEngine {
         } else if let deficit = topDeficit {
             let sets = deficit.effectiveSets.formatted(.number.precision(.fractionLength(1)))
             let target = deficit.targetSets.formatted(.number.precision(.fractionLength(0)))
-            let rotationNote = recommendedDay != nextTrainingDay
-                ? " Forge is overriding the simple rotation because that is the largest current gap."
-                : ""
-            trainingDetail = "\(deficit.muscle.label) is the biggest weekly gap at \(sets)/\(target) effective sets.\(rotationNote)"
+            trainingDetail = "\(deficit.muscle.label) is the biggest weekly gap at \(sets)/\(target) effective sets. Forge uses that gap to shape exercise priority inside \(recommendedDay.rawValue)."
         } else if liftLog != nil {
             trainingDetail = "Weekly muscle volume is broadly covered. Continue the rotation with \(recommendedDay.summary.lowercased())."
         } else {
