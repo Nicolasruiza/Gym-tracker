@@ -10,6 +10,9 @@ struct RootView: View {
             NavigationStack { TrainView() }
                 .tabItem { Label("Train", systemImage: "dumbbell.fill") }
 
+            NavigationStack { EatView() }
+                .tabItem { Label("Eat", systemImage: "fork.knife") }
+
             NavigationStack { HealthView() }
                 .tabItem { Label("Health", systemImage: "heart.text.square.fill") }
 
@@ -279,6 +282,105 @@ struct MuscleVolumeRow: View {
     }
 }
 
+struct EatView: View {
+    @EnvironmentObject private var model: AppModel
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("EAT")
+                    .font(.largeTitle.weight(.black))
+
+                if let targets = model.nutritionTargets {
+                    ForgeCard(title: "TODAY'S TARGET", icon: "target", accent: ForgeTheme.gold) {
+                        Text("\(targets.calories) kcal")
+                            .font(.system(size: 34, weight: .black, design: .rounded))
+                        HStack(spacing: 8) {
+                            MacroTile(label: "PROTEIN", value: "\(targets.proteinG)g")
+                            MacroTile(label: "CARBS", value: "\(targets.carbsG)g")
+                            MacroTile(label: "FAT", value: "\(targets.fatG)g")
+                        }
+                        Text(targets.calibrationSource)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("This is a starting calibration, not a permanent calorie prescription. Forge should change it only after enough body-trend and performance data accumulate.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    ForgeCard(title: "HEART-AWARE GUARDRAILS", icon: "heart.fill", accent: ForgeTheme.gold) {
+                        nutritionLine("Saturated fat", "≤ \(targets.saturatedFatMaxG) g/day")
+                        nutritionLine("Fiber", "≥ \(targets.fiberMinG) g/day")
+                        Text("Favor vegetables, fruit, legumes, nuts, whole grains, lean protein, olive oil and fish. Keep processed meats, trans fat, sugary drinks and heavily refined foods occasional rather than foundational.")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    ForgeCard(title: "WHAT TO EAT", icon: "fork.knife", accent: ForgeTheme.green) {
+                        MealIdea(title: "Breakfast", text: "Protein + fiber-rich carb + fruit. Example: Greek yogurt or cottage cheese, oats/berries, whey if needed.")
+                        MealIdea(title: "Lunch", text: "Lean protein + vegetables + potato, rice, whole grain or legumes + an unsaturated-fat source such as olive oil.")
+                        MealIdea(title: "Around training", text: "Use some of today's carbs where they help: fruit, oats, potato, rice or whole grains. You do not need a special sugar drink for a normal lifting session.")
+                        MealIdea(title: "Dinner", text: "Fish, chicken, legumes or lean meat + plenty of vegetables + a quality carb if it fits the day's target.")
+                    }
+
+                    ForgeCard(title: "CARBS", icon: "bolt.fill", accent: ForgeTheme.blue) {
+                        Text("Carbs are the remainder after protein and adequate fat — not a moral category. On lifting days, Forge can bias more of them toward the meals before and after training. On rest days, total intake matters more than forcing a carb quota.")
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    ForgeCard(title: "NEEDS ONE INPUT", icon: "scalemass.fill", accent: ForgeTheme.gold) {
+                        Text("Forge couldn't find a usable body-weight entry in Apple Health. Add or sync your weight there, then refresh Health data. That unlocks the first nutrition calibration without making you maintain the same number in two places.")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding()
+        }
+        .background(ForgeTheme.background)
+        .navigationTitle("Forge 365")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private func nutritionLine(_ label: String, _ value: String) -> some View {
+        HStack {
+            Text(label).foregroundStyle(.secondary)
+            Spacer()
+            Text(value).font(.headline.monospacedDigit())
+        }
+    }
+}
+
+struct MacroTile: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption2.monospaced())
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.headline.monospacedDigit())
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.white.opacity(0.05))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+}
+
+struct MealIdea: View {
+    let title: String
+    let text: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title).font(.subheadline.weight(.bold))
+            Text(text).foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 3)
+    }
+}
+
 struct HealthView: View {
     @EnvironmentObject private var model: AppModel
 
@@ -293,6 +395,14 @@ struct HealthView: View {
                     healthMetric("7-day average", hours(model.snapshot.sleep.sevenDayAverageHours))
                     healthMetric("Deep", hours(model.snapshot.sleep.deepHours))
                     healthMetric("REM", hours(model.snapshot.sleep.remHours))
+                }
+
+                ForgeCard(title: "BODY + ENERGY", icon: "scalemass.fill", accent: ForgeTheme.gold) {
+                    healthMetric("Body weight", model.healthKit.bodyWeightKg.map { String(format: "%.1f kg", $0) } ?? "—")
+                    healthMetric("7-day energy", model.healthKit.averageDailyEnergyBurned7d.map { "\(Int($0.rounded())) kcal/day" } ?? "—")
+                    Text("Energy expenditure from wearables is only a starting estimate. Forge should calibrate it against actual weight and waist trends before making meaningful calorie changes.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
 
                 ForgeCard(title: "RECOVERY SIGNALS", icon: "waveform.path.ecg", accent: ForgeTheme.green) {
@@ -363,7 +473,7 @@ struct CoachView: View {
                 }
 
                 ForgeCard(title: "COMING NEXT", icon: "hammer.fill", accent: ForgeTheme.blue) {
-                    Text("1. Native detailed set logging\n2. Nutrition targets + foods + carbs around training\n3. Weight + waist trend engine\n4. Weekly coach review\n5. WorkoutKit / Apple Watch delivery")
+                    Text("1. Native detailed set logging\n2. Food logging + saved meals\n3. Weight + waist trend engine\n4. Weekly coach review\n5. WorkoutKit / Apple Watch delivery")
                         .foregroundStyle(.secondary)
                 }
             }
