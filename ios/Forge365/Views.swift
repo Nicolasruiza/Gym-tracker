@@ -39,14 +39,20 @@ struct TodayView: View {
                     Text(model.plan.trainingDetail)
                         .foregroundStyle(.secondary)
 
-                    Button {
-                        model.completeCurrentStrengthSession()
-                    } label: {
-                        Label("Mark strength session complete", systemImage: "checkmark.circle.fill")
-                            .frame(maxWidth: .infinity)
+                    if model.training.activeWorkout == nil {
+                        Button {
+                            model.startTodayWorkout()
+                        } label: {
+                            Label("Start workout", systemImage: "play.fill")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(ForgeTheme.green)
+                    } else {
+                        Label("Workout in progress · continue in Train", systemImage: "timer")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(ForgeTheme.green)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(ForgeTheme.green)
                 }
 
                 ForgeCard(title: "CARDIO / MOVE", icon: "figure.walk", accent: ForgeTheme.blue) {
@@ -158,18 +164,35 @@ struct TrainView: View {
                 Text("TRAIN")
                     .font(.largeTitle.weight(.black))
 
-                ForgeCard(title: "NEXT BEST SESSION", icon: "dumbbell.fill", accent: ForgeTheme.green) {
-                    Text(model.recommendedTrainingDay.rawValue)
-                        .font(.title.bold())
-                    Text(model.plan.trainingDetail)
-                        .foregroundStyle(.secondary)
+                if model.training.activeWorkout != nil {
+                    LiveWorkoutView(
+                        training: model.training,
+                        onFinish: { model.finishActiveStrengthWorkout() },
+                        onCancel: { model.cancelActiveStrengthWorkout() }
+                    )
+                } else {
+                    ForgeCard(title: "NEXT BEST SESSION", icon: "dumbbell.fill", accent: ForgeTheme.green) {
+                        Text(model.recommendedTrainingDay.rawValue)
+                            .font(.title.bold())
+                        Text(model.plan.trainingDetail)
+                            .foregroundStyle(.secondary)
 
-                    Menu {
-                        ForEach(TrainingDay.allCases) { day in
-                            Button(day.rawValue) { model.chooseNextTrainingDay(day) }
+                        Button {
+                            model.startTodayWorkout()
+                        } label: {
+                            Label("Start \(model.recommendedTrainingDay.rawValue)", systemImage: "play.fill")
+                                .frame(maxWidth: .infinity)
                         }
-                    } label: {
-                        Label("Override today's workout", systemImage: "arrow.triangle.2.circlepath")
+                        .buttonStyle(.borderedProminent)
+                        .tint(ForgeTheme.green)
+
+                        Menu {
+                            ForEach(TrainingDay.allCases) { day in
+                                Button(day.rawValue) { model.chooseNextTrainingDay(day) }
+                            }
+                        } label: {
+                            Label("Override today's workout", systemImage: "arrow.triangle.2.circlepath")
+                        }
                     }
                 }
 
@@ -179,7 +202,7 @@ struct TrainView: View {
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(analysis.profileName ?? "Lift Log")
                                     .font(.headline)
-                                Text("\(analysis.sessions.count) sessions imported")
+                                Text("\(analysis.sessions.count) sessions imported · progression weights synced")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
@@ -188,7 +211,7 @@ struct TrainView: View {
                                 .foregroundStyle(ForgeTheme.green)
                         }
                     } else {
-                        Text("Import the JSON export from Lift Log so Forge can understand exact exercises, sets and weekly muscle volume.")
+                        Text("Import the JSON export from Lift Log so Forge can inherit your current weights and understand exact exercises, sets and weekly muscle volume.")
                             .foregroundStyle(.secondary)
                     }
 
@@ -252,6 +275,142 @@ struct TrainView: View {
                 break
             }
         }
+    }
+}
+
+struct LiveWorkoutView: View {
+    @ObservedObject var training: TrainingStore
+    let onFinish: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        if let active = training.activeWorkout {
+            ForgeCard(title: "LIVE WORKOUT", icon: "timer", accent: ForgeTheme.green) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(active.day.rawValue)
+                            .font(.title.bold())
+                        Text("Started \(active.started.formatted(date: .omitted, time: .shortened))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Text("\(training.activeDefinitions.count) exercises")
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            ForEach(training.activeDefinitions) { exercise in
+                ExerciseLogCard(training: training, exercise: exercise)
+            }
+
+            Button(action: onFinish) {
+                Label("Finish workout", systemImage: "checkmark.circle.fill")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(ForgeTheme.green)
+            .disabled(!training.canFinishActiveWorkout)
+
+            if !training.canFinishActiveWorkout {
+                Text("Log all 3 sets for every exercise before finishing. Progression is calculated when the session closes.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            Button(role: .destructive, action: onCancel) {
+                Label("Cancel workout", systemImage: "xmark.circle")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+        }
+    }
+}
+
+struct ExerciseLogCard: View {
+    @ObservedObject var training: TrainingStore
+    let exercise: ForgeExercise
+
+    private var weightBinding: Binding<Double> {
+        Binding(
+            get: { training.weight(for: exercise.id) },
+            set: { training.setWeight($0, for: exercise.id) }
+        )
+    }
+
+    private func repBinding(_ index: Int) -> Binding<Int> {
+        Binding(
+            get: { training.rep(for: exercise.id, setIndex: index) },
+            set: { training.setRep($0, for: exercise.id, setIndex: index) }
+        )
+    }
+
+    private var hitAllTargets: Bool {
+        (0..<3).allSatisfy { training.rep(for: exercise.id, setIndex: $0) >= exercise.targetReps }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 11) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(exercise.name)
+                        .font(.headline)
+                    Text("3 × \(exercise.targetReps)")
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if hitAllTargets {
+                    Label("PROGRESS", systemImage: "arrow.up.circle.fill")
+                        .font(.caption2.monospaced().weight(.bold))
+                        .foregroundStyle(ForgeTheme.green)
+                }
+            }
+
+            if exercise.startingWeight > 0 || exercise.increment > 0 {
+                HStack {
+                    Text("WEIGHT")
+                        .font(.caption2.monospaced())
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    TextField("0", value: weightBinding, format: .number.precision(.fractionLength(0...1)))
+                        .keyboardType(.decimalPad)
+                        .multilineTextAlignment(.trailing)
+                        .frame(width: 90)
+                        .textFieldStyle(.roundedBorder)
+                    Text("lb")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Text("BODYWEIGHT / TIME")
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 8) {
+                ForEach(0..<3, id: \.self) { index in
+                    VStack(spacing: 4) {
+                        Text("SET \(index + 1)")
+                            .font(.caption2.monospaced())
+                            .foregroundStyle(.secondary)
+                        TextField("0", value: repBinding(index), format: .number)
+                            .keyboardType(.numberPad)
+                            .multilineTextAlignment(.center)
+                            .textFieldStyle(.roundedBorder)
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+            }
+        }
+        .padding(14)
+        .background(ForgeTheme.card)
+        .overlay {
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(hitAllTargets ? ForgeTheme.green.opacity(0.7) : Color.white.opacity(0.05), lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 }
 
@@ -473,7 +632,7 @@ struct CoachView: View {
                 }
 
                 ForgeCard(title: "COMING NEXT", icon: "hammer.fill", accent: ForgeTheme.blue) {
-                    Text("1. Native detailed set logging\n2. Food logging + saved meals\n3. Weight + waist trend engine\n4. Weekly coach review\n5. WorkoutKit / Apple Watch delivery")
+                    Text("1. Food logging + saved meals\n2. Weight + waist trend engine\n3. Weekly coach review\n4. WorkoutKit / Apple Watch delivery\n5. Exercise substitutions and injury holds")
                         .foregroundStyle(.secondary)
                 }
             }
