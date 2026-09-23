@@ -6,6 +6,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var snapshot: HealthSnapshot = .empty
     @Published private(set) var plan: DailyPlan
     @Published private(set) var isLoading = false
+    @Published private(set) var liftLogAnalysis: LiftLogAnalysis?
+    @Published private(set) var liftLogImportError: String?
 
     let healthKit = HealthKitClient()
     let training = TrainingStore()
@@ -25,6 +27,10 @@ final class AppModel: ObservableObject {
         return min(365, max(1, days + 1))
     }
 
+    var recommendedTrainingDay: TrainingDay {
+        training.nextDay
+    }
+
     func start() async {
         await healthKit.requestAuthorization()
         await refresh()
@@ -37,8 +43,28 @@ final class AppModel: ObservableObject {
         isLoading = false
     }
 
+    func importLiftLog(from url: URL) {
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer {
+            if scoped { url.stopAccessingSecurityScopedResource() }
+        }
+
+        do {
+            let data = try Data(contentsOf: url)
+            let analysis = try LiftLogImporter.parse(data: data)
+            liftLogAnalysis = analysis
+            liftLogImportError = nil
+            if let recommended = analysis.recommendedNextDay {
+                training.setNextDay(recommended)
+            }
+            rebuildPlan()
+        } catch {
+            liftLogImportError = error.localizedDescription
+        }
+    }
+
     func completeCurrentStrengthSession() {
-        training.complete(training.nextDay)
+        training.complete(recommendedTrainingDay)
         rebuildPlan()
     }
 
@@ -48,7 +74,12 @@ final class AppModel: ObservableObject {
     }
 
     private func rebuildPlan() {
-        plan = CoachEngine.makePlan(snapshot: snapshot, nextTrainingDay: training.nextDay, profile: profile)
+        plan = CoachEngine.makePlan(
+            snapshot: snapshot,
+            nextTrainingDay: training.nextDay,
+            profile: profile,
+            liftLog: liftLogAnalysis
+        )
     }
 
     private func ensureStartDate() {
