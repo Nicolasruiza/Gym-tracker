@@ -31,6 +31,13 @@ final class AppModel: ObservableObject {
         training.nextDay
     }
 
+    var nutritionTargets: NutritionTargets? {
+        NutritionEngine.makeTargets(
+            bodyWeightKg: healthKit.bodyWeightKg,
+            averageDailyEnergyBurned: healthKit.averageDailyEnergyBurned7d
+        )
+    }
+
     func start() async {
         await healthKit.requestAuthorization()
         await refresh()
@@ -78,7 +85,8 @@ final class AppModel: ObservableObject {
             snapshot: snapshot,
             nextTrainingDay: training.nextDay,
             profile: profile,
-            liftLog: liftLogAnalysis
+            liftLog: liftLogAnalysis,
+            nutrition: nutritionTargets
         )
     }
 
