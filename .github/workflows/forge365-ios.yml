@@ -1,0 +1,28 @@
+name: Forge365 iOS
+
+on:
+  pull_request:
+    paths:
+      - "ios/**"
+      - ".github/workflows/forge365-ios.yml"
+  push:
+    branches:
+      - forge-365-ios
+    paths:
+      - "ios/**"
+      - ".github/workflows/forge365-ios.yml"
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Forge365 for iOS Simulator
+        run: |
+          xcodebuild \
+            -project ios/Forge365.xcodeproj \
+            -target Forge365 \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            CODE_SIGNING_ALLOWED=NO \
+            build
