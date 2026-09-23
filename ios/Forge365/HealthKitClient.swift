@@ -6,6 +6,8 @@ import HealthKit
 final class HealthKitClient: ObservableObject {
     @Published private(set) var authorizationRequested = false
     @Published private(set) var lastError: String?
+    @Published private(set) var bodyWeightKg: Double?
+    @Published private(set) var averageDailyEnergyBurned7d: Double?
 
     private let store = HKHealthStore()
     private var observerQueries: [HKObserverQuery] = []
@@ -15,6 +17,9 @@ final class HealthKitClient: ObservableObject {
     private var stepType: HKQuantityType? { HKObjectType.quantityType(forIdentifier: .stepCount) }
     private var restingHRType: HKQuantityType? { HKObjectType.quantityType(forIdentifier: .restingHeartRate) }
     private var hrvType: HKQuantityType? { HKObjectType.quantityType(forIdentifier: .heartRateVariabilitySDNN) }
+    private var bodyMassType: HKQuantityType? { HKObjectType.quantityType(forIdentifier: .bodyMass) }
+    private var activeEnergyType: HKQuantityType? { HKObjectType.quantityType(forIdentifier: .activeEnergyBurned) }
+    private var basalEnergyType: HKQuantityType? { HKObjectType.quantityType(forIdentifier: .basalEnergyBurned) }
 
     func requestAuthorization() async {
         guard HKHealthStore.isHealthDataAvailable() else {
@@ -24,7 +29,9 @@ final class HealthKitClient: ObservableObject {
 
         var readTypes = Set<HKObjectType>()
         readTypes.insert(workoutType)
-        [sleepType, stepType, restingHRType, hrvType].compactMap { $0 }.forEach { readTypes.insert($0) }
+        [sleepType, stepType, restingHRType, hrvType, bodyMassType, activeEnergyType, basalEnergyType]
+            .compactMap { $0 }
+            .forEach { readTypes.insert($0) }
 
         do {
             try await store.requestAuthorization(toShare: [], read: readTypes)
@@ -42,13 +49,32 @@ final class HealthKitClient: ObservableObject {
         async let steps = loadStepsToday()
         async let restingHR = loadLatestQuantity(type: restingHRType, unit: HKUnit.count().unitDivided(by: HKUnit.minute()))
         async let hrv = loadLatestQuantity(type: hrvType, unit: HKUnit.secondUnit(with: .milli))
+        async let weight = loadLatestQuantity(type: bodyMassType, unit: HKUnit.gramUnit(with: .kilo))
+        async let activeEnergy = loadCumulativeQuantity(type: activeEnergyType, unit: HKUnit.kilocalorie(), days: 7)
+        async let basalEnergy = loadCumulativeQuantity(type: basalEnergyType, unit: HKUnit.kilocalorie(), days: 7)
 
-        return await HealthSnapshot(
-            workouts: workouts,
-            sleep: sleep,
-            stepsToday: steps,
-            restingHeartRate: restingHR,
-            hrvSDNN: hrv
+        let resolvedWorkouts = await workouts
+        let resolvedSleep = await sleep
+        let resolvedSteps = await steps
+        let resolvedRestingHR = await restingHR
+        let resolvedHRV = await hrv
+        let resolvedWeight = await weight
+        let resolvedActiveEnergy = await activeEnergy
+        let resolvedBasalEnergy = await basalEnergy
+
+        bodyWeightKg = resolvedWeight
+        if resolvedActiveEnergy > 0 && resolvedBasalEnergy > 0 {
+            averageDailyEnergyBurned7d = (resolvedActiveEnergy + resolvedBasalEnergy) / 7.0
+        } else {
+            averageDailyEnergyBurned7d = nil
+        }
+
+        return HealthSnapshot(
+            workouts: resolvedWorkouts,
+            sleep: resolvedSleep,
+            stepsToday: resolvedSteps,
+            restingHeartRate: resolvedRestingHR,
+            hrvSDNN: resolvedHRV
         )
     }
 
@@ -104,6 +130,20 @@ final class HealthKitClient: ObservableObject {
             let query = HKSampleQuery(sampleType: type, predicate: nil, limit: 1, sortDescriptors: [sort]) { _, samples, _ in
                 let value = (samples?.first as? HKQuantitySample)?.quantity.doubleValue(for: unit)
                 continuation.resume(returning: value)
+            }
+            store.execute(query)
+        }
+    }
+
+    private func loadCumulativeQuantity(type: HKQuantityType?, unit: HKUnit, days: Int) async -> Double {
+        guard let type else { return 0 }
+        let start = Calendar.current.date(byAdding: .day, value: -days, to: Date()) ?? .distantPast
+        let predicate = HKQuery.predicateForSamples(withStart: start, end: Date(), options: .strictStartDate)
+
+        return await withCheckedContinuation { continuation in
+            let query = HKStatisticsQuery(quantityType: type, quantitySamplePredicate: predicate, options: .cumulativeSum) { _, result, _ in
+                let total = result?.sumQuantity()?.doubleValue(for: unit) ?? 0
+                continuation.resume(returning: total)
             }
             store.execute(query)
         }
@@ -174,6 +214,7 @@ final class HealthKitClient: ObservableObject {
 
         var observedTypes: [HKSampleType] = [workoutType]
         if let sleepType { observedTypes.append(sleepType) }
+        if let bodyMassType { observedTypes.append(bodyMassType) }
 
         for type in observedTypes {
             let query = HKObserverQuery(sampleType: type, predicate: nil) { [weak self] _, completion, _ in
