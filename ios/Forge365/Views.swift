@@ -151,7 +151,7 @@ struct TrainView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("TRAIN")
-                    .font(.largeTitle.black())
+                    .font(.largeTitle.weight(.black))
 
                 ForgeCard(title: "NEXT BEST SESSION", icon: "dumbbell.fill", accent: ForgeTheme.green) {
                     Text(model.training.nextDay.rawValue)
@@ -200,7 +200,7 @@ struct HealthView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("HEALTH")
-                    .font(.largeTitle.black())
+                    .font(.largeTitle.weight(.black))
 
                 ForgeCard(title: "SLEEP", icon: "moon.zzz.fill", accent: ForgeTheme.purple) {
                     healthMetric("Last night", hours(model.snapshot.sleep.lastNightHours))
@@ -257,7 +257,7 @@ struct CoachView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("COACH")
-                    .font(.largeTitle.black())
+                    .font(.largeTitle.weight(.black))
 
                 ForgeCard(title: "TODAY'S DECISION", icon: "sparkles", accent: ForgeTheme.gold) {
                     Text(model.plan.coachMessage)
