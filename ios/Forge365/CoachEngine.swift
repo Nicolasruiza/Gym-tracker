@@ -4,23 +4,33 @@ struct CoachEngine {
     static func makePlan(
         snapshot: HealthSnapshot,
         nextTrainingDay: TrainingDay,
-        profile: CoachProfile
+        profile: CoachProfile,
+        liftLog: LiftLogAnalysis? = nil
     ) -> DailyPlan {
         let sleep = snapshot.sleep
         let cardioMinutes = snapshot.cardioMinutesLast7Days
         let strengthSessions = snapshot.strengthSessionsLast7Days
         let lowRecovery = sleep.lastNightHours > 0 && sleep.lastNightHours < 6.0
         let belowSleepTrend = sleep.sevenDayAverageHours > 0 && sleep.sevenDayAverageHours < 7.0
+        let recommendedDay = liftLog?.recommendedNextDay ?? nextTrainingDay
+        let topDeficit = liftLog?.topDeficit
 
-        let trainingTitle: String
+        let trainingTitle = recommendedDay.rawValue
         let trainingDetail: String
 
         if lowRecovery {
-            trainingTitle = nextTrainingDay.rawValue
-            trainingDetail = "Keep the session, but don't chase PRs or add bonus volume today. Reassess how you feel during warm-up."
+            trainingDetail = "Keep the session conservative today: no PR chasing and no bonus volume. Reassess how you feel during warm-up."
+        } else if let deficit = topDeficit {
+            let sets = deficit.effectiveSets.formatted(.number.precision(.fractionLength(1)))
+            let target = deficit.targetSets.formatted(.number.precision(.fractionLength(0)))
+            let rotationNote = recommendedDay != nextTrainingDay
+                ? " Forge is overriding the simple rotation because that is the largest current gap."
+                : ""
+            trainingDetail = "\(deficit.muscle.label) is the biggest weekly gap at \(sets)/\(target) effective sets.\(rotationNote)"
+        } else if liftLog != nil {
+            trainingDetail = "Weekly muscle volume is broadly covered. Continue the rotation with \(recommendedDay.summary.lowercased())."
         } else {
-            trainingTitle = nextTrainingDay.rawValue
-            trainingDetail = nextTrainingDay.summary + ". Continue the Lift Log rotation; detailed muscle-volume balancing comes next when legacy set history is imported."
+            trainingDetail = recommendedDay.summary + ". Import your Lift Log JSON to let Forge balance this against actual muscle volume."
         }
 
         let cardioTitle: String
@@ -52,13 +62,19 @@ struct CoachEngine {
         }
 
         let nutritionTitle = "Nutrition calibration"
-        let nutritionDetail = "Next slice: calorie/protein baseline, carbs matched to training demand, meal suggestions, and weekly adjustment from weight + waist + performance."
+        let nutritionDetail = "Next: calories and protein anchored to body trend, with carbs allocated around training rather than treated as mandatory or forbidden."
 
         var reasons = [
             "\(strengthSessions) strength workout(s) detected in Health over the last 7 days.",
             "\(cardioMinutes) min of aerobic workouts detected over the last 7 days."
         ]
 
+        if let liftLog {
+            reasons.append("Lift Log history imported: \(liftLog.sessions.count) session(s) available for training analysis.")
+            if let deficit = topDeficit {
+                reasons.append("Largest muscle-volume gap: \(deficit.muscle.label) at \(deficit.effectiveSets.formatted(.number.precision(.fractionLength(1)))) / \(deficit.targetSets.formatted(.number.precision(.fractionLength(0)))) effective sets this week.")
+            }
+        }
         if sleep.lastNightHours > 0 {
             reasons.append("Last-night sleep: \(sleep.lastNightHours.formatted(.number.precision(.fractionLength(1)))) h; 7-day average: \(sleep.sevenDayAverageHours.formatted(.number.precision(.fractionLength(1)))) h.")
         }
@@ -72,6 +88,8 @@ struct CoachEngine {
         let message: String
         if lowRecovery {
             message = "Today's plan protects recovery without throwing away the week. Do the planned strength session only if warm-up feels normal; skip extra conditioning."
+        } else if let deficit = topDeficit {
+            message = "Today is being shaped by what your week actually lacks: \(deficit.muscle.label.lowercased()) needs the most attention right now."
         } else if cardioMinutes < 90 {
             message = "Strength stays the anchor today, with a short incline walk available to fill the aerobic side of the week."
         } else {
