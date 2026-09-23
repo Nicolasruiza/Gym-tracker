@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct RootView: View {
     var body: some View {
@@ -69,7 +70,7 @@ struct TodayView: View {
                 ForgeCard(title: "COACH", icon: "sparkles", accent: ForgeTheme.gold) {
                     Text(model.plan.coachMessage)
                         .font(.headline)
-                    Text("Forge is using your actual Health data instead of asking you to re-enter workouts, steps, or sleep.")
+                    Text("Forge combines Apple Health with your detailed Lift Log history instead of asking you to remember what you did.")
                         .foregroundStyle(.secondary)
                 }
 
@@ -146,6 +147,7 @@ struct TodayView: View {
 
 struct TrainView: View {
     @EnvironmentObject private var model: AppModel
+    @State private var showLiftLogImporter = false
 
     var body: some View {
         ScrollView {
@@ -154,9 +156,9 @@ struct TrainView: View {
                     .font(.largeTitle.weight(.black))
 
                 ForgeCard(title: "NEXT BEST SESSION", icon: "dumbbell.fill", accent: ForgeTheme.green) {
-                    Text(model.training.nextDay.rawValue)
+                    Text(model.recommendedTrainingDay.rawValue)
                         .font(.title.bold())
-                    Text(model.training.nextDay.summary)
+                    Text(model.plan.trainingDetail)
                         .foregroundStyle(.secondary)
 
                     Menu {
@@ -164,7 +166,57 @@ struct TrainView: View {
                             Button(day.rawValue) { model.chooseNextTrainingDay(day) }
                         }
                     } label: {
-                        Label("Change next workout", systemImage: "arrow.triangle.2.circlepath")
+                        Label("Override today's workout", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                }
+
+                ForgeCard(title: "LIFT LOG HISTORY", icon: "square.and.arrow.down.fill", accent: ForgeTheme.gold) {
+                    if let analysis = model.liftLogAnalysis {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(analysis.profileName ?? "Lift Log")
+                                    .font(.headline)
+                                Text("\(analysis.sessions.count) sessions imported")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(ForgeTheme.green)
+                        }
+                    } else {
+                        Text("Import the JSON export from Lift Log so Forge can understand exact exercises, sets and weekly muscle volume.")
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button {
+                        showLiftLogImporter = true
+                    } label: {
+                        Label(model.liftLogAnalysis == nil ? "Import Lift Log JSON" : "Re-import latest JSON", systemImage: "doc.badge.plus")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(ForgeTheme.gold)
+
+                    if let error = model.liftLogImportError {
+                        Text(error)
+                            .font(.footnote)
+                            .foregroundStyle(.red)
+                    }
+                }
+
+                if let analysis = model.liftLogAnalysis {
+                    ForgeCard(title: "WEEKLY MUSCLE VOLUME", icon: "chart.bar.fill", accent: ForgeTheme.green) {
+                        ForEach(analysis.weeklyVolume) { volume in
+                            MuscleVolumeRow(volume: volume)
+                        }
+
+                        if let deficit = analysis.topDeficit {
+                            Text("Biggest current gap: \(deficit.muscle.label). Forge uses this as context for today's session instead of blindly following a calendar.")
+                                .font(.footnote)
+                                .foregroundStyle(ForgeTheme.gold)
+                                .padding(.top, 4)
+                        }
                     }
                 }
 
@@ -179,17 +231,51 @@ struct TrainView: View {
                         }
                     }
                 }
-
-                ForgeCard(title: "LIFT LOG MIGRATION", icon: "arrow.down.doc.fill", accent: ForgeTheme.gold) {
-                    Text("HealthKit knows that you lifted, but it doesn't know your bench sets, reps, RIR, or muscle volume. The next engineering slice imports the detailed Lift Log history so Forge can balance weekly muscle stimulus instead of only counting strength sessions.")
-                        .foregroundStyle(.secondary)
-                }
             }
             .padding()
         }
         .background(ForgeTheme.background)
         .navigationTitle("Forge 365")
         .navigationBarTitleDisplayMode(.inline)
+        .fileImporter(
+            isPresented: $showLiftLogImporter,
+            allowedContentTypes: [.json],
+            allowsMultipleSelection: false
+        ) { result in
+            switch result {
+            case .success(let urls):
+                if let url = urls.first { model.importLiftLog(from: url) }
+            case .failure:
+                break
+            }
+        }
+    }
+}
+
+struct MuscleVolumeRow: View {
+    let volume: MuscleVolume
+
+    var body: some View {
+        VStack(spacing: 5) {
+            HStack {
+                Text(volume.muscle.label)
+                    .font(.subheadline.weight(.semibold))
+                Spacer()
+                Text("\(volume.effectiveSets.formatted(.number.precision(.fractionLength(1)))) / \(volume.targetSets.formatted(.number.precision(.fractionLength(0)))) sets")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(volume.deficit > 0.5 ? .secondary : ForgeTheme.green)
+            }
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.white.opacity(0.08))
+                    Capsule()
+                        .fill(volume.deficit > 0.5 ? ForgeTheme.gold : ForgeTheme.green)
+                        .frame(width: geometry.size.width * min(1, volume.completion))
+                }
+            }
+            .frame(height: 6)
+        }
+        .padding(.vertical, 3)
     }
 }
 
@@ -277,7 +363,7 @@ struct CoachView: View {
                 }
 
                 ForgeCard(title: "COMING NEXT", icon: "hammer.fill", accent: ForgeTheme.blue) {
-                    Text("1. Import detailed Lift Log sets and progression\n2. Nutrition targets + foods + carbs around training\n3. Weight + waist trend engine\n4. Weekly coach review\n5. WorkoutKit / Apple Watch delivery")
+                    Text("1. Native detailed set logging\n2. Nutrition targets + foods + carbs around training\n3. Weight + waist trend engine\n4. Weekly coach review\n5. WorkoutKit / Apple Watch delivery")
                         .foregroundStyle(.secondary)
                 }
             }
