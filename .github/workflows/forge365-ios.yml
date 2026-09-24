@@ -17,6 +17,10 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check adaptive coach decisions
+        run: |
+          swiftc ios/Forge365/Models.swift ios/Forge365/CoachEngine.swift ios/Tests/CoachEngineChecks.swift -o /tmp/forge-coach-checks
+          /tmp/forge-coach-checks
       - name: Build Forge365 for iOS Simulator
         run: |
           xcodebuild \

@@ -57,43 +57,86 @@ struct CoachEngine {
         nextTrainingDay: TrainingDay,
         profile: CoachProfile,
         liftLog: LiftLogAnalysis? = nil,
-        nutrition: NutritionTargets? = nil
+        nutrition: NutritionTargets? = nil,
+        nativeSessions: [LoggedStrengthSession] = [],
+        now: Date = Date(),
+        calendar: Calendar = .current
     ) -> DailyPlan {
         let sleep = snapshot.sleep
-        let cardioMinutes = snapshot.cardioMinutesLast7Days
-        let strengthSessions = snapshot.strengthSessionsLast7Days
+        let cutoff = calendar.date(byAdding: .day, value: -7, to: now) ?? now
+        let workouts = snapshot.workouts.filter { $0.startDate >= cutoff && $0.startDate <= now }
+        let cardioMinutes = workouts.filter(\.isCardio).reduce(0) { $0 + $1.durationMinutes }
+        // Count strength days across sources so Watch + Forge logs cannot double the quota.
+        let strengthDates = workouts.filter(\.isStrength).map(\.startDate)
+            + nativeSessions.map(\.date)
+            + (liftLog?.sessions.filter { $0.totalLoggedSets > 0 }.map(\.date) ?? [])
+        let recentStrength = strengthDates.filter { $0 >= cutoff && $0 <= now }
+        let strengthDays = Set(recentStrength.map { calendar.startOfDay(for: $0) })
+        let strengthSessions = strengthDays.count
+        let formalDates = workouts.filter { $0.isStrength || $0.isCardio }.map(\.startDate) + recentStrength
+        let formalDays = Set(formalDates.map { calendar.startOfDay(for: $0) })
+        let today = calendar.startOfDay(for: now)
+        let yesterday = calendar.date(byAdding: .day, value: -1, to: today) ?? today
+        let completedToday = formalDays.contains(today)
+        let trainedYesterday = strengthDays.contains(yesterday)
+        let consecutiveDays = (1...3).allSatisfy { offset in
+            guard let day = calendar.date(byAdding: .day, value: -offset, to: today) else { return false }
+            return formalDays.contains(day)
+        }
         let lowRecovery = sleep.lastNightHours > 0 && sleep.lastNightHours < 6.0
         let belowSleepTrend = sleep.sevenDayAverageHours > 0 && sleep.sevenDayAverageHours < 7.0
         let recommendedDay = nextTrainingDay
         let topDeficit = liftLog?.topDeficit
 
-        let trainingTitle = recommendedDay.rawValue
-        let trainingDetail: String
+        var trainingTitle = recommendedDay.rawValue
+        var trainingDetail: String
 
         if lowRecovery {
             trainingDetail = "Keep the session conservative today: no PR chasing and no bonus volume. Reassess how you feel during warm-up."
         } else if let deficit = topDeficit {
             let sets = deficit.effectiveSets.formatted(.number.precision(.fractionLength(1)))
             let target = deficit.targetSets.formatted(.number.precision(.fractionLength(0)))
-            trainingDetail = "\(deficit.muscle.label) is the biggest weekly gap at \(sets)/\(target) effective sets. Forge uses that gap to shape exercise priority inside \(recommendedDay.rawValue)."
+            trainingDetail = "\(deficit.muscle.label) is the biggest weekly gap at \(sets)/\(target) effective sets. Review that gap alongside \(recommendedDay.rawValue)."
         } else if liftLog != nil {
             trainingDetail = "Weekly muscle volume is broadly covered. Continue the rotation with \(recommendedDay.summary.lowercased())."
         } else {
             trainingDetail = recommendedDay.summary + ". Import your Lift Log JSON to let Forge balance this against actual muscle volume."
         }
 
-        let cardioTitle: String
-        let cardioDetail: String
+        var cardioTitle: String
+        var cardioDetail: String
 
-        if lowRecovery {
-            cardioTitle = "No extra cardio required"
-            cardioDetail = "Recovery is the priority today. Normal daily movement is enough."
-        } else if cardioMinutes < 90 {
-            cardioTitle = "Usual incline walk"
-            cardioDetail = "20–30 min at the comfortable/moderate effort you already tolerate. Forge won't prescribe HR ceilings or hard intervals while cardiology review is pending."
+        // Planning defaults, not medical targets or a rigid weekly calendar.
+        let focus: DailyFocus
+        if completedToday {
+            focus = .complete
+        } else if lowRecovery || consecutiveDays {
+            focus = .recovery
+        } else if trainedYesterday || strengthSessions >= 3 {
+            focus = cardioMinutes < 90 ? .cardio : .recovery
         } else {
-            cardioTitle = "Cardio optional"
-            cardioDetail = "You already logged \(cardioMinutes) min of aerobic workouts in the last 7 days. Strength and normal movement can take priority today."
+            focus = .strength
+        }
+
+        switch focus {
+        case .strength:
+            cardioTitle = "No cardio planned today"
+            cardioDetail = "Keep today focused on strength. Your next recommendation adapts to what you actually complete."
+        case .cardio:
+            trainingTitle = "No weights today"
+            trainingDetail = "Your next strength session is \(recommendedDay.rawValue). It stays in the rotation."
+            cardioTitle = "Your usual cardio session"
+            cardioDetail = "Use your established session within any clinician guidance. No added intensity or catch-up work."
+        case .recovery:
+            trainingTitle = "Recovery day"
+            trainingDetail = "No formal workout today. Your next strength session remains \(recommendedDay.rawValue)."
+            cardioTitle = "No cardio planned today"
+            cardioDetail = "Everyday movement is enough. Missed sessions are not a debt."
+        case .complete:
+            trainingTitle = "Training complete"
+            trainingDetail = "Today's activity is logged. Your next strength session remains \(recommendedDay.rawValue)."
+            cardioTitle = "No extra session today"
+            cardioDetail = "Focus on food, normal movement and sleep."
         }
 
         let sleepTitle: String
@@ -121,10 +164,12 @@ struct CoachEngine {
         }
 
         var reasons = [
-            "\(strengthSessions) strength workout(s) detected in Health over the last 7 days.",
+            "\(strengthSessions) strength day(s) recorded across Health and Forge over the last 7 days.",
             "\(cardioMinutes) min of aerobic workouts detected over the last 7 days."
         ]
 
+        reasons.append("Initial planning defaults: separate strength and cardio, up to three strength days per rolling week, and recovery after three consecutive training days.")
+        reasons.append("The 90-minute cardio comparison is a provisional scheduling rule, not a personal medical target.")
         if let liftLog {
             reasons.append("Lift Log history imported: \(liftLog.sessions.count) session(s) available for training analysis.")
             if let deficit = topDeficit {
@@ -144,18 +189,12 @@ struct CoachEngine {
             reasons.append("Cardiology guidance is pending, so Forge does not invent heart-rate limits or prescribe maximal-intensity work.")
         }
 
-        let message: String
-        if lowRecovery {
-            message = "Today's plan protects recovery without throwing away the week. Do the planned strength session only if warm-up feels normal; skip extra conditioning."
-        } else if let deficit = topDeficit {
-            message = "Today is being shaped by what your week actually lacks: \(deficit.muscle.label.lowercased()) needs the most attention right now."
-        } else if cardioMinutes < 90 {
-            message = "Strength stays the anchor today, with a short incline walk available to fill the aerobic side of the week."
-        } else {
-            message = "Your aerobic work is already building. Today can stay focused on the next strength session and sleep consistency."
-        }
+        let message = focus == .strength
+            ? "One focus today: complete your strength session. Cardio can have its own day."
+            : trainingDetail
 
         return DailyPlan(
+            focus: focus,
             trainingTitle: trainingTitle,
             trainingDetail: trainingDetail,
             cardioTitle: cardioTitle,

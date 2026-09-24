@@ -7,7 +7,8 @@ struct WorkoutRecord: Identifiable, Hashable {
     let durationMinutes: Int
     let sourceName: String
     let isStrength: Bool
-    let isCardio: Bool
+    var isCardio: Bool
+    var needsCardioConfirmation: Bool = false
 }
 
 struct SleepSummary: Hashable {
@@ -79,7 +80,15 @@ enum TrainingDay: String, CaseIterable, Codable, Identifiable {
     }
 }
 
+enum DailyFocus: String, Hashable {
+    case strength = "Strength day"
+    case cardio = "Cardio day"
+    case recovery = "Recovery day"
+    case complete = "Training complete"
+}
+
 struct DailyPlan: Hashable {
+    let focus: DailyFocus
     let trainingTitle: String
     let trainingDetail: String
     let cardioTitle: String

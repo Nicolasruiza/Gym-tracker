@@ -50,6 +50,7 @@ final class AppModel: ObservableObject {
     func refresh() async {
         isLoading = true
         snapshot = await healthKit.readSnapshot()
+        applyConfirmedWalks()
         rebuildPlan()
         isLoading = false
     }
@@ -72,6 +73,29 @@ final class AppModel: ObservableObject {
             rebuildPlan()
         } catch {
             liftLogImportError = error.localizedDescription
+        }
+    }
+
+    func confirmWalkAsCardio(_ id: UUID) {
+        var confirmed = Set(UserDefaults.standard.stringArray(forKey: "forge365.cardioWalks") ?? [])
+        if confirmed.contains(id.uuidString) {
+            confirmed.remove(id.uuidString)
+        } else {
+            confirmed.insert(id.uuidString)
+        }
+        UserDefaults.standard.set(Array(confirmed), forKey: "forge365.cardioWalks")
+        applyConfirmedWalks()
+        rebuildPlan()
+    }
+
+    private func applyConfirmedWalks() {
+        let confirmed = Set(UserDefaults.standard.stringArray(forKey: "forge365.cardioWalks") ?? [])
+        snapshot.workouts = snapshot.workouts.map { workout in
+            var updated = workout
+            if workout.needsCardioConfirmation {
+                updated.isCardio = confirmed.contains(workout.id.uuidString)
+            }
+            return updated
         }
     }
 
@@ -110,7 +134,8 @@ final class AppModel: ObservableObject {
             nextTrainingDay: training.nextDay,
             profile: profile,
             liftLog: combinedTrainingAnalysis(),
-            nutrition: nutritionTargets
+            nutrition: nutritionTargets,
+            nativeSessions: training.sessions
         )
     }
 

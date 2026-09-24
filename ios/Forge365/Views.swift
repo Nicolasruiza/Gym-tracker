@@ -31,15 +31,29 @@ struct TodayView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 header
-                metricStrip
+                Text(model.plan.focus.rawValue)
+                    .font(.title.bold())
 
                 ForgeCard(title: "TRAIN", icon: "dumbbell.fill", accent: ForgeTheme.green) {
                     Text(model.plan.trainingTitle)
                         .font(.title2.bold())
-                    Text(model.plan.trainingDetail)
-                        .foregroundStyle(.secondary)
+                    DisclosureGroup("Why this plan?") {
+                        Text(model.plan.trainingDetail)
+                        ForEach(model.plan.reasons, id: \.self) { reason in
+                            Text(reason).font(.footnote)
+                        }
+                    }
+                    .foregroundStyle(.secondary)
 
-                    if model.training.activeWorkout == nil {
+                    if model.training.activeWorkout == nil && model.plan.focus == .strength {
+                        ForEach(ForgeWorkoutPlan.exercises(for: model.recommendedTrainingDay)) { exercise in
+                            HStack {
+                                Text(exercise.name)
+                                Spacer()
+                                Text("3 × \(exercise.targetReps)").monospacedDigit()
+                            }
+                            .font(.subheadline)
+                        }
                         Button {
                             model.startTodayWorkout()
                         } label: {
@@ -48,17 +62,24 @@ struct TodayView: View {
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(ForgeTheme.green)
-                    } else {
+                    } else if model.training.activeWorkout != nil {
                         Label("Workout in progress · continue in Train", systemImage: "timer")
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(ForgeTheme.green)
                     }
                 }
 
-                ForgeCard(title: "CARDIO / MOVE", icon: "figure.walk", accent: ForgeTheme.blue) {
+                ForgeCard(title: "CARDIO", icon: "figure.walk", accent: ForgeTheme.blue) {
                     Text(model.plan.cardioTitle)
                         .font(.title3.bold())
                     Text(model.plan.cardioDetail)
+                        .foregroundStyle(.secondary)
+                }
+
+                ForgeCard(title: "MOVE", icon: "figure.walk", accent: ForgeTheme.blue) {
+                    Text("Everyday movement")
+                        .font(.title3.bold())
+                    Text("Commutes, errands and time with the kids count as movement. This is not another workout.")
                         .foregroundStyle(.secondary)
                 }
 
@@ -171,7 +192,7 @@ struct TrainView: View {
                         onCancel: { model.cancelActiveStrengthWorkout() }
                     )
                 } else {
-                    ForgeCard(title: "NEXT BEST SESSION", icon: "dumbbell.fill", accent: ForgeTheme.green) {
+                    ForgeCard(title: "STRENGTH ROTATION", icon: "dumbbell.fill", accent: ForgeTheme.green) {
                         Text(model.recommendedTrainingDay.rawValue)
                             .font(.title.bold())
                         Text(model.plan.trainingDetail)
@@ -180,7 +201,7 @@ struct TrainView: View {
                         Button {
                             model.startTodayWorkout()
                         } label: {
-                            Label("Start \(model.recommendedTrainingDay.rawValue)", systemImage: "play.fill")
+                            Label(model.plan.focus == .strength ? "Start \(model.recommendedTrainingDay.rawValue)" : "Train anyway · \(model.recommendedTrainingDay.rawValue)", systemImage: "play.fill")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
@@ -579,7 +600,18 @@ struct HealthView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(model.snapshot.workouts.prefix(12)) { workout in
-                            WorkoutRow(workout: workout)
+                            VStack(alignment: .leading) {
+                                WorkoutRow(workout: workout)
+                                if workout.needsCardioConfirmation {
+                                    Button(workout.isCardio ? "Count as everyday movement" : "This was intentional cardio") {
+                                        model.confirmWalkAsCardio(workout.id)
+                                    }
+                                    .buttonStyle(.bordered)
+                                    Text(workout.isCardio ? "Counted as cardio by you." : "This walk counts as everyday movement.")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
                         }
                     }
                 }

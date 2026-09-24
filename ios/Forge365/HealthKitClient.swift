@@ -99,7 +99,8 @@ final class HealthKitClient: ObservableObject {
                         durationMinutes: max(1, Int(workout.duration / 60.0)),
                         sourceName: workout.sourceRevision.source.name,
                         isStrength: Self.isStrength(type),
-                        isCardio: Self.isCardio(type)
+                        isCardio: Self.isCardio(type),
+                        needsCardioConfirmation: type == .walking
                     )
                 }
                 continuation.resume(returning: workouts)
@@ -273,7 +274,7 @@ final class HealthKitClient: ObservableObject {
 
     private static func isCardio(_ type: HKWorkoutActivityType) -> Bool {
         switch type {
-        case .walking, .running, .cycling, .elliptical, .rowing, .hiking, .stairClimbing, .mixedCardio, .swimming:
+        case .running, .cycling, .elliptical, .rowing, .hiking, .stairClimbing, .mixedCardio, .swimming:
             return true
         default:
             return false
