@@ -1,11 +1,13 @@
 # Lift Log
 
-A single-file workout tracker for a 3-day rotation (Upper A / Legs / Upper B).
+A single-file workout tracker. Nicolas's plan is a 4-day rotation (Upper A / Legs A / Upper B / Legs B);
+the SA profile keeps its 3-day rotation (Upper A / Legs / Upper B).
 No build step, no backend — the whole app is `index.html`.
 
 ## What it does
 
-- Three training days with fixed exercise blocks (basics, compound, isolation, core)
+- Rotation days with fixed exercise blocks (core, basics, compound, isolation); arm work runs as a superset
+- Legs twice per rotation: squat + glutes (hip thrust, split squat, hip abduction) and hinge + single leg (RDL, step-up, farmer carry)
 - Logs 3 sets per exercise; weight moves up automatically only when all 3 sets hit target reps
 - Rest-day gate: warns (or blocks) if you already trained today or trained yesterday
 - Plate math for barbell lifts, dual-cable multipliers, bodyweight-strength badges

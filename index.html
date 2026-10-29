@@ -258,7 +258,7 @@
 
   .profilebar{padding:24px 0 20px;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto;
     column-gap:13px;align-items:center;text-align:left}
-  .profilebar::before{content:"LIFT LOG / 3";grid-column:1/3;margin-bottom:19px;color:var(--bone);
+  .profilebar::before{content:"LIFT LOG";grid-column:1/3;margin-bottom:19px;color:var(--bone);
     font-family:"Barlow Condensed",sans-serif;font-size:27px;font-weight:700;letter-spacing:.065em}
   .profilebar::after{content:"Progressive overload, without the spreadsheet.";position:absolute;right:0;top:31px;
     color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase}
@@ -413,7 +413,59 @@
    `w` is the explicit starting load and stays authoritative for the two seeded
    profiles, so their numbers never move. `frac` (load as a fraction of bodyweight)
    is only used to generate a plan for a NEWLY created profile. */
+/* 4-day Upper / Legs / Upper / Legs rotation. Legs twice per rotation with direct
+   glute and single-leg work; upper days trimmed to ~6 lifts with arms as a superset
+   so a session stays near an hour. Days 1–3 keep their old meaning (Upper A, Legs,
+   Upper B), so 3-day history maps straight onto it. */
 const PLAN_NR={
+ 1:{name:"Upper A",short:"U-A",blocks:[
+  {t:"Core · do first",items:[
+   {id:"leg_raise",n:"Hanging leg raise",r:10,w:0,inc:0,bw:1,frac:0}]},
+  {t:"Basics · free weight",items:[
+   {id:"bb_press",n:"Barbell press",r:6,w:135,inc:5,key:1,bar:45,frac:.696},
+   {id:"lat_pull",n:"Lat pulldown",r:8,w:75,inc:5,key:1,mult:2,frac:.387}]},
+  {t:"Compound",items:[
+   {id:"db_ohp",n:"Dumbbell shoulder press",r:8,w:35,inc:5,each:1,frac:.180},
+   {id:"cbl_row",n:"Cable row",r:10,w:70,inc:5,frac:.361}]},
+  {t:"Isolation · superset",items:[
+   {id:"db_curl",n:"Dumbbell bicep curl",r:12,w:30,inc:5,each:1,frac:.155},
+   {id:"cbl_tri",n:"Cable triceps extension",r:12,w:60,inc:5,frac:.309}]}]},
+ 2:{name:"Legs A",short:"LEG-A",blocks:[
+  {t:"Core · do first",items:[
+   {id:"pallof",n:"Pallof press (per side)",r:12,w:30,inc:5,frac:.155}]},
+  {t:"Basics · free weight",items:[
+   {id:"gob_squat",n:"Goblet squat",r:8,w:50,inc:5,key:1,frac:.258},
+   {id:"hip_thrust",n:"Barbell hip thrust",r:10,w:95,inc:10,key:1,bar:45,frac:.490}]},
+  {t:"Compound",items:[
+   {id:"split_squat",n:"Dumbbell split squat (per leg)",r:10,w:25,inc:5,each:1,frac:.129}]},
+  {t:"Isolation",items:[
+   {id:"leg_ext",n:"Leg extension",r:12,w:100,inc:10,frac:.515},
+   {id:"hip_abd",n:"Hip abduction",r:15,w:70,inc:10,frac:.361}]}]},
+ 3:{name:"Upper B",short:"U-B",blocks:[
+  {t:"Core · do first",items:[{id:"cbl_crunch",n:"Cable crunch",r:15,w:50,inc:5,frac:.258}]},
+  {t:"Basics",items:[
+   {id:"db_incl",n:"Dumbbell incline bench press",r:8,w:45,inc:5,each:1,key:1,frac:.232},
+   {id:"pullup",n:"Pull-ups",r:8,w:0,inc:5,bw:1,key:1,frac:0}]},
+  {t:"Compound",items:[
+   {id:"db_row",n:"Dumbbell row",r:8,w:50,inc:5,frac:.258}]},
+  {t:"Isolation",items:[
+   {id:"lat_raise",n:"Lateral raise",r:15,w:15,inc:5,each:1,frac:.077}]},
+  {t:"Isolation · superset",items:[
+   {id:"hammer",n:"Hammer curls",r:12,w:25,inc:5,each:1,frac:.129},
+   {id:"skull",n:"Skull crusher",r:12,w:40,inc:5,bar:25,frac:.206}]}]},
+ 4:{name:"Legs B",short:"LEG-B",blocks:[
+  {t:"Core · do first",items:[{id:"plank",n:"Plank (seconds)",r:45,w:0,inc:0,bw:1,frac:0}]},
+  {t:"Basics · free weight",items:[
+   {id:"rdl",n:"Romanian deadlift",r:6,w:95,inc:10,key:1,bar:45,frac:.490},
+   {id:"step_up",n:"Dumbbell step-up (per leg)",r:10,w:25,inc:5,each:1,key:1,frac:.129}]},
+  {t:"Compound",items:[{id:"leg_press",n:"Leg press",r:10,w:180,inc:10,plates:1,frac:.928}]},
+  {t:"Isolation",items:[
+   {id:"ham_curl",n:"Lying hamstring curl",r:12,w:80,inc:10,frac:.412},
+   {id:"farmer",n:"Farmer carry (seconds)",r:40,w:50,inc:5,each:1,frac:.258}]}]}
+};
+/* The previous 3-day plan. Not used for training any more; kept so lifts that left
+   the plan (fly, face pull, barbell curl, calf raise) still resolve in history. */
+const PLAN_NR3={
  1:{name:"Upper A",short:"U-A",blocks:[
   {t:"Core · do first",items:[
    {id:"leg_raise",n:"Hanging leg raise",r:10,w:0,inc:0,bw:1,frac:0},
@@ -509,7 +561,10 @@ const QMAP_NR={bb_press:"barbell bench press proper form",lat_pull:"lat pulldown
  cbl_row:"seated cable row proper form",bb_curl:"barbell curl proper form",
  lat_raise:"dumbbell lateral raise proper form",skull:"skull crusher ez bar proper form",
  hammer:"hammer curl proper form",cbl_crunch:"kneeling cable crunch proper form",
- pallof:"pallof press anti rotation proper form"};
+ pallof:"pallof press anti rotation proper form",
+ hip_thrust:"barbell hip thrust proper form",split_squat:"dumbbell split squat proper form",
+ hip_abd:"hip abduction machine glutes form",step_up:"dumbbell step up proper form",
+ farmer:"farmer carry proper form"};
 const QMAP_SA={sa_dead_bug:"dead bug exercise proper form",sa_db_bench:"dumbbell bench press proper form",
  sa_lat_pull:"lat pulldown proper form",sa_db_ohp:"seated dumbbell shoulder press form",
  sa_cbl_row:"seated cable row proper form",sa_m_fly:"pec deck machine fly form",
@@ -534,7 +589,7 @@ const AREAS=['chest','back','shoulders','arms','glutes','hamstrings','quads','ca
 const PAT_LABEL={hinge:"hip hinge",squat:"squat pattern","push-h":"horizontal press",
   "push-v":"overhead press","pull-v":"vertical pull","pull-h":"horizontal row",
   core:"trunk flexion","anti-ext":"anti-extension","anti-rot":"anti-rotation",
-  "anti-lat":"anti-lateral-flexion",iso:"isolation work"};
+  "anti-lat":"anti-lateral-flexion",iso:"isolation work",single:"single-leg",carry:"loaded carry"};
 const CONCEPT={
  core_flex:{p:['core'],pat:'core',load:['spine'],alts:[
    {id:"alt_hang_knee",n:"Hanging knee raise",frac:0,bw:1,inc:0},
@@ -600,7 +655,16 @@ const CONCEPT={
  calf:{p:['calves'],pat:'iso',load:[],alts:[
    {id:"alt_seated_calf",n:"Seated calf raise",frac:.25,inc:10}]},
  glute_iso:{p:['glutes'],pat:'iso',load:[],alts:[
-   {id:"alt_abductor",n:"Hip abductor machine",frac:.30,inc:5}]}
+   {id:"alt_abductor",n:"Hip abductor machine",frac:.30,inc:5}]},
+ single_leg:{p:['quads','glutes'],s:['hamstrings'],pat:'single',load:['knee'],alts:[
+   {id:"alt_reverse_lunge",n:"Reverse lunge (per leg)",frac:.13,inc:5,each:1},
+   {id:"alt_bss",n:"Bulgarian split squat (per leg)",frac:.13,inc:5,each:1}]},
+ abduction:{p:['glutes'],pat:'iso',load:[],alts:[
+   {id:"alt_cable_abd",n:"Cable hip abduction (per side)",frac:.05,inc:5},
+   {id:"alt_band_walk",n:"Banded lateral walk (steps per side)",frac:0,bw:1,inc:0}]},
+ carry:{p:['core'],s:['back'],pat:'carry',load:['lowback'],alts:[
+   {id:"alt_suitcase_carry",n:"Suitcase carry (seconds per side)",frac:.26,inc:5},
+   {id:"alt_dead_hang",n:"Dead hang (seconds)",frac:0,bw:1,inc:0}]}
 };
 const CONCEPT_OF={
  /* NR */
@@ -610,6 +674,8 @@ const CONCEPT_OF={
  cbl_tri:'tri', skull:'tri', db_curl:'curl', bb_curl:'curl', hammer:'curl',
  gob_squat:'squat', leg_press:'legpress', rdl:'hinge', ham_curl:'hamcurl',
  leg_ext:'legext', calf:'calf',
+ hip_thrust:'hipthrust', split_squat:'single_leg', step_up:'single_leg',
+ hip_abd:'abduction', farmer:'carry',
  /* SA */
  sa_dead_bug:'core_antiext', sa_side_plank:'core_antilat', sa_glute_bridge:'glute_iso',
  sa_pallof:'core_antirot',
@@ -709,7 +775,7 @@ const NAG_DAYS=14;
 const EX_INDEX={};
 (function(){
   const add=x=>{ if(x&&x.id&&!EX_INDEX[x.id])EX_INDEX[x.id]={...x} };
-  [PLAN_NR,PLAN_SA].forEach(P=>[1,2,3].forEach(d=>P[d].blocks.forEach(b=>b.items.forEach(add))));
+  [PLAN_NR,PLAN_NR3,PLAN_SA].forEach(P=>Object.keys(P).forEach(d=>P[d].blocks.forEach(b=>b.items.forEach(add))));
   Object.keys(CONCEPT).forEach(k=>(CONCEPT[k].alts||[]).forEach(add));
   Object.keys(FOCUS).forEach(k=>(FOCUS[k].add||[]).forEach(sp=>add(sp.ex)));
   Object.keys(INJURIES).forEach(k=>(INJURIES[k].subs||[]).forEach(sp=>add(sp.ex)));
@@ -792,12 +858,15 @@ const DOW=["D1","D2","D3","D4","D5","D6","D7"];
 /* ================= ACTIVE PLAN ================= */
 let PLAN, BW, STD, QMAP, ALL;
 const items=d=>PLAN[d].blocks.flatMap(b=>b.items);
+/* Rotation length comes from the plan itself: 4 days for the Upper/Legs plan, 3 for SA. */
+const daysOf=P=>Object.keys(P).map(Number).sort((a,b)=>a-b);
+const DAYS=()=>daysOf(PLAN);
 const round5=v=>Math.max(0,Math.round(v/5)*5);
 
 /* Generate a plan for a profile that has no bespoke one, from bodyweight × experience. */
 function genPlan(bw,exp){
   const e=EXP[exp]||EXP.trained, out={};
-  [1,2,3].forEach(d=>{
+  daysOf(PLAN_NR).forEach(d=>{
     const src=PLAN_NR[d];
     out[d]={name:src.name,short:src.short,blocks:src.blocks.map(b=>({t:b.t,items:b.items.map(ex=>{
       const o={...ex};
@@ -838,13 +907,13 @@ function mkEx(spec){
 }
 function clonePlan(p){
   const out={};
-  [1,2,3].forEach(d=>{out[d]={name:p[d].name,short:p[d].short,
+  daysOf(p).forEach(d=>{out[d]={name:p[d].name,short:p[d].short,
     blocks:p[d].blocks.map(b=>({t:b.t,items:b.items.map(x=>({...x}))}))}});
   return out;
 }
 function findByMatch(plan,match){
   const m=(match||'').toLowerCase(); if(!m)return null;
-  for(const d of [1,2,3])for(const b of plan[d].blocks)
+  for(const d of daysOf(plan))for(const b of plan[d].blocks)
     for(const x of b.items) if(x.n.toLowerCase().includes(m))return {d,b,x};
   return null;
 }
@@ -870,7 +939,7 @@ function appendEx(plan,spec){
    at the front, one exercise per day rather than inflating every core movement. */
 function applyBump(plan,area){
   if(area==='core'){
-    [1,2,3].forEach(d=>{
+    daysOf(plan).forEach(d=>{
       for(const b of plan[d].blocks){
         const x=b.items.find(i=>(metaOf(i.id).p||[]).includes('core'));
         if(x){x.sets=5;break}
@@ -879,11 +948,11 @@ function applyBump(plan,area){
     return;
   }
   const f=FOCUS[area]; let target=null;
-  if(f&&f.bump)[1,2,3].forEach(d=>plan[d].blocks.forEach(b=>b.items.forEach(x=>{
+  if(f&&f.bump)daysOf(plan).forEach(d=>plan[d].blocks.forEach(b=>b.items.forEach(x=>{
     if(CONCEPT_OF[x.id]===f.bump)target=x })));
   if(!target){
     const hits=[];
-    [1,2,3].forEach(d=>plan[d].blocks.forEach(b=>b.items.forEach(x=>{
+    daysOf(plan).forEach(d=>plan[d].blocks.forEach(b=>b.items.forEach(x=>{
       if((metaOf(x.id).p||[]).includes(area))hits.push(x)})));
     target=hits[hits.length-1];
   }
@@ -892,7 +961,7 @@ function applyBump(plan,area){
 function idsForInjury(key,plan){
   const def=INJURIES[key]; if(!def)return[];
   const out=[];
-  [1,2,3].forEach(d=>plan[d].blocks.forEach(b=>b.items.forEach(x=>{
+  daysOf(plan).forEach(d=>plan[d].blocks.forEach(b=>b.items.forEach(x=>{
     if((metaOf(x.id).load||[]).some(l=>def.loads.includes(l)))out.push(x.id)})));
   return [...new Set(out)];
 }
@@ -914,13 +983,13 @@ function setActivePlan(){
   if(f){ f.add.forEach(s=>appendEx(base,s)); applyBump(base,DB.focus); }
 
   const inj=injuredIds();
-  [1,2,3].forEach(d=>base[d].blocks.forEach(b=>b.items.forEach(x=>{
+  daysOf(base).forEach(d=>base[d].blocks.forEach(b=>b.items.forEach(x=>{
     if(inj.has(x.id))x.injured=1})));
   PLAN=base;
 
   /* ALL carries the alternates too, so a swapped lift resolves in history,
      progression and the session summary exactly like a planned one. */
-  const list=[1,2,3].flatMap(d=>items(d));
+  const list=DAYS().flatMap(d=>items(d));
   const alts=[];
   list.forEach(x=>(metaOf(x.id).alts||[]).forEach(a=>{
     if(!alts.some(y=>y.id===a.id))alts.push(mkEx({...a,r:x.r}))}));
@@ -931,12 +1000,12 @@ function setActivePlan(){
 }
 
 /* ================= VOLUME ACCOUNTING ================= */
-function weekDays(){ return [1,2,3]; }
+function weekDays(){ return DAYS(); }
 /* Weekly sets per area. Injured exercises count as zero — that is the whole point:
    a hold nobody notices is a hole in the week, not a lift that is merely frozen. */
 function setsForPlan(planObj,skip){
   const inj=injuredIds(), acc={}; AREAS.forEach(a=>acc[a]=0);
-  weekDays().forEach(d=>planObj[d].blocks.forEach(b=>b.items.forEach(ex=>{
+  daysOf(planObj).forEach(d=>planObj[d].blocks.forEach(b=>b.items.forEach(ex=>{
     if((skip&&skip.has(ex.id))||inj.has(ex.id))return;
     const m=metaOf(ex.id), n=ex.sets||3;
     (m.p||[]).forEach(a=>{if(acc[a]!=null)acc[a]+=n});
@@ -1062,16 +1131,17 @@ function gate(){
   if(!last)return{ok:1,msg:"First session. Nothing logged yet."};
   const gap=dayDiff(last.date,today());
   if(gap===0)return{ok:0,hard:0,msg:`You already trained <b>${PLAN[last.day].name}</b> today. Two sessions in one day is not more progress, it is less recovery — only override to catch up a missed log.`};
-  if(gap===1)return{ok:0,hard:0,msg:`You trained <b>${PLAN[last.day].name}</b> yesterday. At 3 days a week the plan wants a rest day in between.`};
+  if(gap===1)return{ok:0,hard:0,msg:`You trained <b>${PLAN[last.day].name}</b> yesterday. The plan wants a rest day (or a walk) between strength days.`};
   return{ok:1,msg:`Last strength session: <b>${PLAN[last.day].name}</b>, ${gap} days ago.`};
 }
 function nextDay(){
   const last=DB.history[DB.history.length-1];
-  return last?(last.day%3)+1:1;
+  const n=DAYS().length;
+  return last&&last.day<=n?(last.day%n)+1:1;
 }
 function cycleDone(){
   let set=new Set();
-  DB.history.forEach(h=>{ set.add(h.day); if(set.size===3) set=new Set(); });
+  DB.history.forEach(h=>{ set.add(h.day); if(set.size>=DAYS().length) set=new Set(); });
   return set;
 }
 /* Menstrual-cycle day — logged only, never used to alter any prescription. */
@@ -1082,7 +1152,7 @@ function cycleDayNum(){
 }
 
 function sessionItems(day,lowEnergy){
-  return PLAN[day].blocks.filter(b=>!(lowEnergy&&b.t==='Isolation')).flatMap(b=>b.items);
+  return PLAN[day].blocks.filter(b=>!(lowEnergy&&b.t.startsWith('Isolation'))).flatMap(b=>b.items);
 }
 function recentStreak(){
   if(!DB.history.length)return 0;
@@ -1097,7 +1167,7 @@ function recentStreak(){
 function movementGlyph(ex){
   const p=metaOf(ex.id).pat||'';
   return ({'push-h':'→','push-v':'↑','pull-h':'←','pull-v':'↓',squat:'↕',hinge:'◇',
-    core:'◎','anti-ext':'◎','anti-rot':'↻','anti-lat':'◐',iso:'•'})[p]||'•';
+    core:'◎','anti-ext':'◎','anti-rot':'↻','anti-lat':'◐',iso:'•',single:'⇅',carry:'⇢'})[p]||'•';
 }
 function completionBox(){
   const c=celebration;
@@ -1132,7 +1202,7 @@ function switcherHTML(){
 function renderWeek(){
   const W=document.getElementById('week');
   const done=cycleDone(), sug=nextDay();
-  W.innerHTML=[1,2,3].map(d=>{
+  W.innerHTML=DAYS().map(d=>{
     const cls=['wd'];
     if(viewMode!=='history' && d===view)cls.push('on');
     if(done.has(d))cls.push('done');
@@ -1161,7 +1231,7 @@ function render(){
   const focused=live&&focusedExId?visible.find(ex=>ex.id===focusedExId):null;
   const expanded=focused||current;
   PLAN[view].blocks.forEach(b=>{
-    if(live && A.lowEnergy && b.t==='Isolation') return;
+    if(live && A.lowEnergy && b.t.startsWith('Isolation')) return;
     const h=document.createElement('div');h.className='blk';
     if(expanded&&b.items.some(x=>x.id===expanded.id))h.classList.add('current-block');
     h.innerHTML=`<span>${b.t}</span><i></i>`;L.appendChild(h);
@@ -1205,15 +1275,15 @@ function sessBox(){
   const canReopen=last&&last.date===today()&&last.day===view;
   const cls=g.ok?'':'rest';
   const loweHtmlPre = profile.lowEnergy?`<button class="lowe ${preLowEnergy?'on':''}" id="lowEnergyBtn">LOW ENERGY DAY${preLowEnergy?' · ON':''}</button>`:'';
-  const count=sessionItems(view,preLowEnergy).length, mins=Math.ceil(count*4/5)*5, done=cycleDone().size;
+  const count=sessionItems(view,preLowEnergy).length, mins=Math.ceil(count*8/5)*5, done=cycleDone().size;
   return `<div class="today-card ${g.ok?'':'resting'}">
     <div class="eyebrow">${g.ok?'Today’s training':'Recovery day'}</div>
     <div class="today-title">${PLAN[view].name}</div>
     <div class="today-sub">${g.msg}${g.ok&&sug!==view?` Up next in the rotation: <b>${PLAN[sug].name}</b>.`:''}</div>
     <div class="today-meta"><div class="today-stat"><b>${count}</b><small>EXERCISES</small></div>
       <div class="today-stat"><b>~${mins}</b><small>MINUTES</small></div><div class="today-stat"><b>${recentStreak()}</b><small>SESSION STREAK</small></div></div>
-    <div class="weekgoal">${[0,1,2].map(i=>`<span class="${i<done?'on':''}"></span>`).join('')}</div>
-    <div class="weekgoal-label">${done} OF 3 WORKOUTS COMPLETE THIS ROTATION</div>
+    <div class="weekgoal">${DAYS().map((_,i)=>`<span class="${i<done?'on':''}"></span>`).join('')}</div>
+    <div class="weekgoal-label">${done} OF ${DAYS().length} WORKOUTS COMPLETE THIS ROTATION</div>
     ${canReopen?`<button class="big" id="reopen">REOPEN ${PLAN[last.day].name}</button>
        <p style="margin:10px 0 0;font-size:12px">Closed by mistake? This puts today's ${PLAN[last.day].name} back in progress with everything you logged, and undoes the weight changes until you close it again.</p>`
       :`<button class="big ${g.ok?'':'off'}" id="start">START ${PLAN[view].name}</button>
