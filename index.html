@@ -437,9 +437,9 @@ const PLAN_NR={
    {id:"gob_squat",n:"Goblet squat",r:8,w:50,inc:5,key:1,frac:.258},
    {id:"hip_thrust",n:"Barbell hip thrust",r:10,w:95,inc:10,key:1,bar:45,frac:.490}]},
   {t:"Compound",items:[
-   {id:"split_squat",n:"Dumbbell split squat (per leg)",r:10,w:25,inc:5,each:1,frac:.129}]},
+   {id:"split_squat",n:"Dumbbell split squat (per leg)",r:10,w:25,inc:5,each:1,frac:.129},
+   {id:"sb_squat",n:"Single-leg box squat (per leg)",r:8,w:0,inc:5,bw:1,frac:0}]},
   {t:"Isolation",items:[
-   {id:"leg_ext",n:"Leg extension",r:12,w:100,inc:10,frac:.515},
    {id:"hip_abd",n:"Hip abduction",r:15,w:70,inc:10,frac:.361}]}]},
  3:{name:"Upper B",short:"U-B",blocks:[
   {t:"Core · do first",items:[{id:"cbl_crunch",n:"Cable crunch",r:15,w:50,inc:5,frac:.258}]},
@@ -454,7 +454,7 @@ const PLAN_NR={
    {id:"hammer",n:"Hammer curls",r:12,w:25,inc:5,each:1,frac:.129},
    {id:"skull",n:"Skull crusher",r:12,w:40,inc:5,bar:25,frac:.206}]}]},
  4:{name:"Legs B",short:"LEG-B",blocks:[
-  {t:"Core · do first",items:[{id:"plank",n:"Plank (seconds)",r:45,w:0,inc:0,bw:1,frac:0}]},
+  {t:"Balance · do first",items:[{id:"sl_rdl",n:"Single-leg RDL, bodyweight (per leg)",r:10,w:0,inc:0,bw:1,frac:0}]},
   {t:"Basics · free weight",items:[
    {id:"rdl",n:"Romanian deadlift",r:6,w:95,inc:10,key:1,bar:45,frac:.490},
    {id:"step_up",n:"Dumbbell step-up (per leg)",r:10,w:25,inc:5,each:1,key:1,frac:.129}]},
@@ -525,9 +525,9 @@ const PLAN_SA={
    {id:"sa_gob_squat",n:"Goblet squat",r:10,w:20,inc:5,key:1},
    {id:"sa_hip_thrust",n:"Hip thrust",r:12,w:65,inc:5,key:1}]},
   {t:"Compound",items:[
-   {id:"sa_split_squat",n:"Dumbbell split squat (per leg)",r:10,w:10,inc:5,each:1}]},
+   {id:"sa_split_squat",n:"Dumbbell split squat (per leg)",r:10,w:10,inc:5,each:1},
+   {id:"sa_sb_squat",n:"Single-leg box squat (per leg)",r:8,w:0,inc:5,bw:1}]},
   {t:"Isolation",items:[
-   {id:"sa_leg_ext",n:"Leg extension",r:12,w:40,inc:5},
    {id:"sa_hip_abd",n:"Hip abduction",r:15,w:40,inc:5}]}]},
  3:{name:"Upper B",short:"U-B",blocks:[
   {t:"Core · do first",items:[{id:"sa_side_plank",n:"Side plank (seconds per side)",r:20,w:0,inc:0,bw:1}]},
@@ -542,7 +542,7 @@ const PLAN_SA={
    {id:"sa_hammer",n:"Hammer curls",r:12,w:10,inc:5,each:1},
    {id:"sa_rope_tri",n:"Rope triceps pushdown",r:15,w:20,inc:5}]}]},
  4:{name:"Legs B",short:"LEG-B",blocks:[
-  {t:"Core · do first",items:[{id:"sa_glute_bridge",n:"Glute bridge",r:15,w:0,inc:0,bw:1}]},
+  {t:"Balance · do first",items:[{id:"sa_sl_rdl",n:"Single-leg RDL, bodyweight (per leg)",r:10,w:0,inc:0,bw:1}]},
   {t:"Basics · free weight",items:[
    {id:"sa_rdl",n:"Dumbbell Romanian deadlift",r:10,w:30,inc:5,key:1},
    {id:"sa_step_up",n:"Dumbbell step-up (per leg)",r:10,w:10,inc:5,each:1,key:1}]},
@@ -612,7 +612,8 @@ const QMAP_NR={bb_press:"barbell bench press proper form",lat_pull:"lat pulldown
  pallof:"pallof press anti rotation proper form",
  hip_thrust:"barbell hip thrust proper form",split_squat:"dumbbell split squat proper form",
  hip_abd:"hip abduction machine glutes form",step_up:"dumbbell step up proper form",
- farmer:"farmer carry proper form"};
+ farmer:"farmer carry proper form",
+ sb_squat:"single leg box squat proper form",sl_rdl:"bodyweight single leg romanian deadlift form"};
 const QMAP_SA={sa_dead_bug:"dead bug exercise proper form",sa_db_bench:"dumbbell bench press proper form",
  sa_lat_pull:"lat pulldown proper form",sa_db_ohp:"seated dumbbell shoulder press form",
  sa_cbl_row:"seated cable row proper form",sa_m_fly:"pec deck machine fly form",
@@ -627,7 +628,8 @@ const QMAP_SA={sa_dead_bug:"dead bug exercise proper form",sa_db_bench:"dumbbell
  sa_lat_raise:"dumbbell lateral raise proper form",sa_rope_tri:"rope triceps pushdown form",
  sa_hammer:"hammer curl proper form",sa_pallof:"pallof press anti rotation proper form",
  sa_split_squat:"dumbbell split squat proper form",sa_hip_abd:"hip abduction machine glutes form",
- sa_step_up:"dumbbell step up proper form",sa_farmer:"farmer carry proper form"};
+ sa_step_up:"dumbbell step up proper form",sa_farmer:"farmer carry proper form",
+ sa_sb_squat:"single leg box squat proper form",sa_sl_rdl:"bodyweight single leg romanian deadlift form"};
 
 /* ================= MOVEMENT METADATA =================
    Keyed by concept so the two plans (and any generated one) share it.
@@ -712,6 +714,9 @@ const CONCEPT={
  abduction:{p:['glutes'],pat:'iso',load:[],alts:[
    {id:"alt_cable_abd",n:"Cable hip abduction (per side)",frac:.05,inc:5},
    {id:"alt_band_walk",n:"Banded lateral walk (steps per side)",frac:0,bw:1,inc:0}]},
+ sl_hinge:{p:['hamstrings','glutes'],s:['core'],pat:'single',load:[],alts:[
+   {id:"alt_sl_rdl_db",n:"Single-leg RDL with dumbbell (per leg)",frac:.10,inc:5},
+   {id:"alt_sl_stand",n:"Single-leg stand, eyes closed (seconds per leg)",frac:0,bw:1,inc:0}]},
  carry:{p:['core'],s:['back'],pat:'carry',load:['lowback'],alts:[
    {id:"alt_suitcase_carry",n:"Suitcase carry (seconds per side)",frac:.26,inc:5},
    {id:"alt_dead_hang",n:"Dead hang (seconds)",frac:0,bw:1,inc:0}]}
@@ -725,7 +730,7 @@ const CONCEPT_OF={
  gob_squat:'squat', leg_press:'legpress', rdl:'hinge', ham_curl:'hamcurl',
  leg_ext:'legext', calf:'calf',
  hip_thrust:'hipthrust', split_squat:'single_leg', step_up:'single_leg',
- hip_abd:'abduction', farmer:'carry',
+ hip_abd:'abduction', farmer:'carry', sb_squat:'single_leg', sl_rdl:'sl_hinge',
  /* SA */
  sa_dead_bug:'core_antiext', sa_side_plank:'core_antilat', sa_glute_bridge:'glute_iso',
  sa_pallof:'core_antirot',
@@ -735,7 +740,7 @@ const CONCEPT_OF={
  sa_cbl_tri:'tri', sa_rope_tri:'tri', sa_db_curl:'curl', sa_hammer:'curl',
  sa_gob_squat:'squat', sa_leg_press:'legpress', sa_rdl:'hinge', sa_hip_thrust:'hipthrust',
  sa_ham_curl:'hamcurl', sa_leg_ext:'legext', sa_calf:'calf',
- sa_split_squat:'single_leg', sa_step_up:'single_leg', sa_hip_abd:'abduction', sa_farmer:'carry',
+ sa_split_squat:'single_leg', sa_step_up:'single_leg', sa_hip_abd:'abduction', sa_farmer:'carry', sa_sb_squat:'single_leg', sa_sl_rdl:'sl_hinge',
  /* focus / injury additions */
  fx_hip_thrust:'hipthrust', fx_kickback:'glute_iso', fx_seated_ham:'hamcurl',
  fx_incline_curl:'curl', fx_cable_lat:'side_delt', fx_pullover:'row', fx_cable_fly:'fly',
