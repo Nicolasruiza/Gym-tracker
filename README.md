@@ -1,7 +1,6 @@
 # Lift Log
 
-A single-file workout tracker. Nicolas's plan is a 4-day rotation (Upper A / Legs A / Upper B / Legs B);
-the SA profile keeps its 3-day rotation (Upper A / Legs / Upper B).
+A single-file workout tracker. Both profiles (Nicolas and Sofia/SA) run a 4-day rotation (Upper A / Legs A / Upper B / Legs B).
 No build step, no backend — the whole app is `index.html`.
 
 ## What it does

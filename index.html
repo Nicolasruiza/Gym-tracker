@@ -504,7 +504,55 @@ const PLAN_NR3={
    {id:"skull",n:"Skull crusher",r:12,w:40,inc:5,bar:25,frac:.206},
    {id:"hammer",n:"Hammer curls",r:12,w:25,inc:5,each:1,frac:.129}]}]}
 };
+/* Sofia's plan, same 4-day Upper / Legs / Upper / Legs shape as Nicolas's, her own loads. */
 const PLAN_SA={
+ 1:{name:"Upper A",short:"U-A",blocks:[
+  {t:"Core · do first",items:[
+   {id:"sa_dead_bug",n:"Dead bug",r:10,w:0,inc:0,bw:1}]},
+  {t:"Basics · free weight",items:[
+   {id:"sa_db_bench",n:"Dumbbell bench press",r:8,w:15,inc:5,key:1,each:1},
+   {id:"sa_lat_pull",n:"Lat pulldown",r:10,w:30,inc:5,key:1,mult:2}]},
+  {t:"Compound",items:[
+   {id:"sa_db_ohp",n:"Dumbbell shoulder press",r:10,w:10,inc:5,each:1},
+   {id:"sa_cbl_row",n:"Seated cable row",r:10,w:40,inc:5}]},
+  {t:"Isolation · superset",items:[
+   {id:"sa_db_curl",n:"Dumbbell bicep curl",r:12,w:10,inc:5,each:1},
+   {id:"sa_cbl_tri",n:"Cable triceps extension",r:12,w:20,inc:5}]}]},
+ 2:{name:"Legs A",short:"LEG-A",blocks:[
+  {t:"Core · do first",items:[
+   {id:"sa_pallof",n:"Pallof press (per side)",r:12,w:15,inc:5}]},
+  {t:"Basics · free weight",items:[
+   {id:"sa_gob_squat",n:"Goblet squat",r:10,w:20,inc:5,key:1},
+   {id:"sa_hip_thrust",n:"Hip thrust",r:12,w:65,inc:5,key:1}]},
+  {t:"Compound",items:[
+   {id:"sa_split_squat",n:"Dumbbell split squat (per leg)",r:10,w:10,inc:5,each:1}]},
+  {t:"Isolation",items:[
+   {id:"sa_leg_ext",n:"Leg extension",r:12,w:40,inc:5},
+   {id:"sa_hip_abd",n:"Hip abduction",r:15,w:40,inc:5}]}]},
+ 3:{name:"Upper B",short:"U-B",blocks:[
+  {t:"Core · do first",items:[{id:"sa_side_plank",n:"Side plank (seconds per side)",r:20,w:0,inc:0,bw:1}]},
+  {t:"Basics",items:[
+   {id:"sa_db_incl",n:"Dumbbell incline press",r:10,w:12,inc:5,key:1,each:1},
+   {id:"sa_pulldown2",n:"Assisted pull-up / lat pulldown",r:10,w:35,inc:5,key:1,mult:2}]},
+  {t:"Compound",items:[
+   {id:"sa_cs_row",n:"Chest-supported row",r:10,w:30,inc:5}]},
+  {t:"Isolation",items:[
+   {id:"sa_lat_raise",n:"Lateral raise",r:15,w:5,inc:5,each:1}]},
+  {t:"Isolation · superset",items:[
+   {id:"sa_hammer",n:"Hammer curls",r:12,w:10,inc:5,each:1},
+   {id:"sa_rope_tri",n:"Rope triceps pushdown",r:15,w:20,inc:5}]}]},
+ 4:{name:"Legs B",short:"LEG-B",blocks:[
+  {t:"Core · do first",items:[{id:"sa_glute_bridge",n:"Glute bridge",r:15,w:0,inc:0,bw:1}]},
+  {t:"Basics · free weight",items:[
+   {id:"sa_rdl",n:"Dumbbell Romanian deadlift",r:10,w:30,inc:5,key:1},
+   {id:"sa_step_up",n:"Dumbbell step-up (per leg)",r:10,w:10,inc:5,each:1,key:1}]},
+  {t:"Compound",items:[{id:"sa_leg_press",n:"Leg press",r:12,w:90,inc:5,plates:1}]},
+  {t:"Isolation",items:[
+   {id:"sa_ham_curl",n:"Lying hamstring curl",r:12,w:30,inc:5},
+   {id:"sa_farmer",n:"Farmer carry (seconds)",r:30,w:20,inc:5,each:1}]}]}
+};
+/* Sofia's previous 3-day plan, kept so retired lifts still resolve in history. */
+const PLAN_SA3={
  1:{name:"Upper A",short:"U-A",blocks:[
   {t:"Core · do first",items:[
    {id:"sa_dead_bug",n:"Dead bug",r:10,w:0,inc:0,bw:1},
@@ -577,7 +625,9 @@ const QMAP_SA={sa_dead_bug:"dead bug exercise proper form",sa_db_bench:"dumbbell
  sa_db_incl:"incline dumbbell bench press form",sa_pulldown2:"assisted pull up machine form",
  sa_cs_row:"chest supported row machine form",sa_landmine:"landmine press proper form",
  sa_lat_raise:"dumbbell lateral raise proper form",sa_rope_tri:"rope triceps pushdown form",
- sa_hammer:"hammer curl proper form",sa_pallof:"pallof press anti rotation proper form"};
+ sa_hammer:"hammer curl proper form",sa_pallof:"pallof press anti rotation proper form",
+ sa_split_squat:"dumbbell split squat proper form",sa_hip_abd:"hip abduction machine glutes form",
+ sa_step_up:"dumbbell step up proper form",sa_farmer:"farmer carry proper form"};
 
 /* ================= MOVEMENT METADATA =================
    Keyed by concept so the two plans (and any generated one) share it.
@@ -685,6 +735,7 @@ const CONCEPT_OF={
  sa_cbl_tri:'tri', sa_rope_tri:'tri', sa_db_curl:'curl', sa_hammer:'curl',
  sa_gob_squat:'squat', sa_leg_press:'legpress', sa_rdl:'hinge', sa_hip_thrust:'hipthrust',
  sa_ham_curl:'hamcurl', sa_leg_ext:'legext', sa_calf:'calf',
+ sa_split_squat:'single_leg', sa_step_up:'single_leg', sa_hip_abd:'abduction', sa_farmer:'carry',
  /* focus / injury additions */
  fx_hip_thrust:'hipthrust', fx_kickback:'glute_iso', fx_seated_ham:'hamcurl',
  fx_incline_curl:'curl', fx_cable_lat:'side_delt', fx_pullover:'row', fx_cable_fly:'fly',
@@ -775,7 +826,7 @@ const NAG_DAYS=14;
 const EX_INDEX={};
 (function(){
   const add=x=>{ if(x&&x.id&&!EX_INDEX[x.id])EX_INDEX[x.id]={...x} };
-  [PLAN_NR,PLAN_NR3,PLAN_SA].forEach(P=>Object.keys(P).forEach(d=>P[d].blocks.forEach(b=>b.items.forEach(add))));
+  [PLAN_NR,PLAN_NR3,PLAN_SA,PLAN_SA3].forEach(P=>Object.keys(P).forEach(d=>P[d].blocks.forEach(b=>b.items.forEach(add))));
   Object.keys(CONCEPT).forEach(k=>(CONCEPT[k].alts||[]).forEach(add));
   Object.keys(FOCUS).forEach(k=>(FOCUS[k].add||[]).forEach(sp=>add(sp.ex)));
   Object.keys(INJURIES).forEach(k=>(INJURIES[k].subs||[]).forEach(sp=>add(sp.ex)));
