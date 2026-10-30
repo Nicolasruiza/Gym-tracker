@@ -387,6 +387,38 @@
 
   @media(max-width:480px){.today-title{font-size:34px}.today-card{padding:18px 16px}.today-meta{gap:5px}.today-stat{padding:9px 7px}
     body.workout-live .wrap{padding:0 10px}.history-summary{gap:5px}.history-summary div{padding:11px 7px}.spark{width:48px}}
+
+  /* ================= RECOMP WEEK ================= */
+  .rc-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:4px 0 12px}
+  .rc-chip{min-height:58px;border:1px solid var(--rule);border-radius:10px;background:var(--card);color:var(--muted);cursor:pointer;
+    font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.06em;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:4px 0}
+  .rc-chip b{font-family:"Barlow Condensed",sans-serif;font-size:15px;letter-spacing:.04em;color:var(--bone);font-weight:600}
+  .rc-chip.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
+  .rc-chip.on{background:var(--accent);border-color:var(--accent);color:var(--accentText)}.rc-chip.on b{color:var(--accentText)}
+  .rc-chip.done::after{content:"\2713";font-size:11px;color:var(--accent);line-height:1}.rc-chip.on.done::after{color:var(--accentText)}
+  .rc-list{list-style:none;margin:14px 0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .rc-list li{display:flex;gap:10px;align-items:flex-start;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.055);border-radius:11px;padding:11px 12px;font-size:13.5px;line-height:1.45;color:var(--bone)}
+  .rc-list li small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .rc-list li .k{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--accent);min-width:46px;padding-top:2px;letter-spacing:.06em}
+  .rc-hr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:4px 0 2px}
+  .rc-hr input,.rc-row input{width:72px;height:40px;border-radius:8px;border:1px solid var(--rule);background:#131B1F;color:var(--bone);font-family:"IBM Plex Mono",monospace;font-size:14px;text-align:center}
+  .rc-hr b{color:var(--bone)}
+  .rc-row{display:flex;gap:8px;align-items:center;margin:12px 0}
+  .rc-row label{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;color:var(--muted)}
+  .rc-seg{display:flex;gap:6px;margin:12px 0}.rc-seg button{flex:1;min-height:44px;border:1px solid var(--rule);border-radius:9px;background:transparent;color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em;cursor:pointer}
+  .rc-seg button.on{background:var(--accentDim);color:var(--accent);border-color:var(--accent)}
+  .rc-sum{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.06em;color:var(--muted);margin:0 0 14px;line-height:1.7}
+  .rc-done{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.06em;color:var(--accent);margin:10px 0 0}
+  .rc-ghost{width:100%;min-height:44px;margin-top:8px;border:1px solid var(--rule);border-radius:10px;background:transparent;color:var(--muted);font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;cursor:pointer}
+  .tmr{text-align:center;padding:6px 0 2px}
+  .tmr-phase{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  .tmr.hard .tmr-phase{color:var(--brass)}
+  .tmr-clock{font-family:"Barlow Condensed",sans-serif;font-size:96px;line-height:1;font-weight:700;color:var(--bone);margin:6px 0;font-variant-numeric:tabular-nums}
+  .tmr.hard .tmr-clock{color:var(--brass)}
+  .tmr-next{font-size:13px;color:var(--muted);min-height:20px}
+  .tmr-bar{height:7px;border-radius:99px;background:#303632;margin:14px 0;overflow:hidden}.tmr-bar span{display:block;height:100%;background:var(--accent);width:0}
+  .tmr-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .tmr-btns button{min-height:48px;border:1px solid var(--rule);border-radius:10px;background:var(--card2);color:var(--bone);font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;cursor:pointer}
 </style>
 </head>
 <body>
@@ -399,6 +431,7 @@
   </div>
   <div class="week" id="week"></div>
   <button class="histbtn" id="histBtn">HISTORY · PROGRESS</button>
+  <button class="histbtn" id="recompBtn">RECOMP WEEK · CARDIO · BONE</button>
   <div id="sess"></div>
   <div id="list"></div>
   <div class="bar2">
@@ -869,7 +902,8 @@ function defaultDB(planKey){
   return {next:{},history:[],active:null,
           holds: planKey==='nr' ? {rdl:1} : {},
           cycleStarts:[],
-          focus:null, injuries:[], cycleAnchor:null};   // anchor() sets this on first use
+          focus:null, injuries:[], cycleAnchor:null,    // anchor() sets this on first use
+          cardio:[], age:null};                          // recomp week: cardio/jumps log, age for HR zones
 }
 
 /* ================= STATE ================= */
@@ -878,7 +912,7 @@ let profile=null;           // the active profile OBJECT
 let DB=defaultDB('nr');
 let editIdx=null, preLowEnergy=false, setupOpen=false, altOpen=null, celebration=null, focusedExId=null;
 let view=1;                 // rotation day 1..3, only meaningful when viewMode==='strength'
-let viewMode='strength';    // strength | easy | rest | history
+let viewMode='strength';    // strength | easy | rest | history | recomp
 let hydrated=false, dirty=false, storageOK=null;
 
 const store={
@@ -1193,7 +1227,9 @@ function gate(){
   if(!last)return{ok:1,msg:"First session. Nothing logged yet."};
   const gap=dayDiff(last.date,today());
   if(gap===0)return{ok:0,hard:0,msg:`You already trained <b>${PLAN[last.day].name}</b> today. Two sessions in one day is not more progress, it is less recovery — only override to catch up a missed log.`};
-  if(gap===1)return{ok:0,hard:0,msg:`You trained <b>${PLAN[last.day].name}</b> yesterday. The plan wants a rest day (or a walk) between strength days.`};
+  const region=d=>/^legs/i.test((PLAN[d]&&PLAN[d].name)||'')?'legs':'upper';
+  if(gap===1&&PLAN[last.day]&&region(last.day)!==region(view))return{ok:1,msg:`You trained <b>${PLAN[last.day].name}</b> yesterday, so today's ${region(view)==='legs'?'legs are':'upper body is'} fresh.`};
+  if(gap===1)return{ok:0,hard:0,msg:`You trained <b>${PLAN[last.day].name}</b> yesterday. Give the same muscles a day: do the other half, or a walk.`};
   return{ok:1,msg:`Last strength session: <b>${PLAN[last.day].name}</b>, ${gap} days ago.`};
 }
 function nextDay(){
@@ -1266,13 +1302,15 @@ function renderWeek(){
   const done=cycleDone(), sug=nextDay();
   W.innerHTML=DAYS().map(d=>{
     const cls=['wd'];
-    if(viewMode!=='history' && d===view)cls.push('on');
+    if(viewMode==='strength' && d===view)cls.push('on');
     if(done.has(d))cls.push('done');
     else if(d===sug)cls.push('today');
     return `<button class="${cls.join(' ')}" data-slot="${d}">DAY ${d}<small>${PLAN[d].short}</small></button>`;
   }).join('');
   const hb=document.getElementById('histBtn');
   if(hb)hb.classList.toggle('on',viewMode==='history');
+  const rb=document.getElementById('recompBtn');
+  if(rb)rb.classList.toggle('on',viewMode==='recomp');
 }
 function render(){
   const S=document.getElementById('sess'), L=document.getElementById('list');
@@ -1281,6 +1319,7 @@ function render(){
   document.body.classList.toggle('workout-live',liveNow);
   if(setupOpen){ S.innerHTML=setupBox(); L.innerHTML=''; wireSetup(); return }
   if(viewMode==='history'){ S.innerHTML=''; L.innerHTML=history(); return }
+  if(viewMode==='recomp'){ S.innerHTML=''; L.innerHTML=recompView(); wireRecomp(); return }
   if(celebration){S.innerHTML=completionBox();L.innerHTML='';wire();return}
   S.innerHTML=nagHTML()+sessBox(); wire();
   L.innerHTML='';
@@ -1798,6 +1837,207 @@ document.getElementById('list').addEventListener('change',ev=>{
   save();
 });
 
+/* ================= RECOMP WEEK =================
+   A separate view: the 4 strength days plus Zone 2, one 4x4 VO2 session and jump
+   (impact) work for bone. Strength sessions are still started and logged in the
+   normal view; cardio and jumps are logged here into DB.cardio. Lift slots follow
+   the rotation (whatever is next), so a missed day never desyncs the week. */
+const RC_WEEK={1:'lift',2:'z2',3:'lift',4:'vo2',5:'lift',6:'lift',0:'walk'};   // JS weekday -> slot
+const RC_ORDER=[1,2,3,4,5,6,0];
+const RC_ABBR={1:'MON',2:'TUE',3:'WED',4:'THU',5:'FRI',6:'SAT',0:'SUN'};
+const RC_SLOT={lift:'LIFT',z2:'Z2',vo2:'4×4',walk:'WALK'};
+let rcSel=null, rcIntervals=null, timer=null, timerTick=null, wakeLock=null;
+
+const rcWeekday=ds=>new Date(ds+'T00:00:00').getDay();
+function rcWeekDates(){            // Monday-based week containing today
+  const t=today(), back=(rcWeekday(t)+6)%7, mon=addDays(t,-back), out={};
+  RC_ORDER.forEach((w,i)=>out[w]=addDays(mon,i)); return out;
+}
+const rcLogged=(date,type)=>(DB.cardio||[]).some(c=>c.date===date&&c.type===type);
+const rcLifted=date=>DB.history.some(h=>h.date===date);
+/* Lift slots check by date. Cardio slots are a weekly target, so a 4x4 done on
+   Friday instead of Thursday still ticks the 4x4 slot. */
+function rcSlotDone(slot,date){
+  if(slot==='lift')return rcLifted(date);
+  const type={z2:'z2',vo2:'4x4',walk:'walk'}[slot];
+  return Object.values(rcWeekDates()).some(d=>rcLogged(d,type));
+}
+const rcIsLegs=d=>/^legs/i.test((PLAN[d]&&PLAN[d].name)||'');
+function rcHR(){
+  const a=+DB.age; if(!a||a<14||a>99)return null;
+  const max=Math.round(208-0.7*a);                     // Tanaka estimate
+  return {max, z2:[Math.round(max*.6),Math.round(max*.7)], hard:[Math.round(max*.85),Math.round(max*.95)]};
+}
+const rc4x4Count=()=>(DB.cardio||[]).filter(c=>c.type==='4x4').length;
+const rcDefaultIntervals=()=>rc4x4Count()<3?3:4;
+function rcLog(type,extra){
+  DB.cardio=(DB.cardio||[]).filter(c=>!(c.date===today()&&c.type===type));   // one entry per type per day
+  DB.cardio.push(Object.assign({date:today(),type},extra||{}));
+  save(); render();
+}
+function rcHRLine(kind){
+  const hr=rcHR();
+  if(!hr) return `<div class="rc-hr">Add your age for heart-rate targets <input id="rcAge" type="number" inputmode="numeric" placeholder="age" aria-label="Age"></div>`;
+  const r=kind==='z2'?hr.z2:hr.hard;
+  return `<div class="rc-hr">Target <b>${r[0]}–${r[1]} bpm</b> · max ≈ ${hr.max} · age <input id="rcAge" type="number" inputmode="numeric" value="${DB.age}" aria-label="Age"></div>`;
+}
+function rcPhases(n){
+  const ph=[{k:'easy',label:'Warm-up · easy',sec:600}];
+  for(let i=1;i<=n;i++){
+    ph.push({k:'hard',label:`Interval ${i} of ${n} · hard`,sec:240});
+    if(i<n) ph.push({k:'easy',label:`Recover ${i} of ${n-1} · easy`,sec:180});
+  }
+  ph.push({k:'easy',label:'Cool-down',sec:300});
+  return ph;
+}
+const rcMinutes=n=>10+n*4+(n-1)*3+5;
+const mmss=s=>`${Math.floor(s/60)}:${String(Math.max(0,Math.floor(s%60))).padStart(2,'0')}`;
+
+function recompView(){
+  const dates=rcWeekDates(), tWd=rcWeekday(today());
+  const sel=rcSel==null?tWd:rcSel, slot=RC_WEEK[sel], isToday=sel===tWd;
+  const strip=RC_ORDER.map(w=>{
+    const st=RC_WEEK[w], cls=['rc-chip'];
+    if(w===tWd)cls.push('today'); if(w===sel)cls.push('on'); if(rcSlotDone(st,dates[w]))cls.push('done');
+    return `<button class="${cls.join(' ')}" data-rcday="${w}" aria-label="${RC_ABBR[w]} ${RC_SLOT[st]}">${RC_ABBR[w]}<b>${RC_SLOT[st]}</b></button>`;
+  }).join('');
+  const wk=Object.values(dates);
+  const sum=`<div class="rc-sum">THIS WEEK · ${wk.filter(rcLifted).length}/4 LIFT · ${wk.filter(d=>rcLogged(d,'z2')).length}/1 ZONE 2 · `
+    +`${wk.filter(d=>rcLogged(d,'4x4')).length}/1 4×4 · ${wk.filter(d=>rcLogged(d,'jumps')).length}/2 JUMPS</div>`;
+  const when=isToday?'Today':RC_ABBR[sel].charAt(0)+RC_ABBR[sel].slice(1).toLowerCase();
+  let body='';
+
+  if(timer){
+    body=`<div class="today-card"><div class="eyebrow">4×4 VO2 intervals</div>${timerHTML()}</div>`;
+  } else if(slot==='lift'){
+    const nd=nextDay(), legs=rcIsLegs(nd), jumpsDone=rcLogged(today(),'jumps');
+    body=`<div class="today-card"><div class="eyebrow">${when} · strength</div>
+      <div class="today-title">${PLAN[nd].name}</div>
+      <div class="today-sub">Next in your rotation. Lead with the first lift <b>heavy, 4–6 reps</b>, and end every set 1–2 reps short of failure.</div>
+      ${legs?`<ul class="rc-list">
+        <li><span class="k">IMPACT</span><div>Pogo hops · 3 × 10<small>Quick, stiff ankles, land softly. Bone responds to impact.</small></div></li>
+        <li><span class="k">IMPACT</span><div>Box jumps · 3 × 5<small>Jump up, step down. Start with a low box.</small></div></li></ul>
+        ${jumpsDone?`<div class="rc-done">✓ JUMPS LOGGED TODAY</div>`:`<button class="rc-ghost" id="rcJumps">JUMPS DONE (~5 MIN)</button>`}`
+      :`<p class="today-sub" style="margin-top:10px">Upper day: no jumps. Heavy presses and carries still load your bones.</p>`}
+      <button class="big" id="rcOpen" style="margin-top:14px">OPEN ${PLAN[nd].name}</button></div>`;
+  } else if(slot==='z2'||slot==='walk'){
+    const done=rcLogged(today(),slot), z2=slot==='z2';
+    body=`<div class="today-card"><div class="eyebrow">${when} · ${z2?'aerobic base':'recovery'}</div>
+      <div class="today-title">${z2?'Zone 2 walk':'Long walk or rest'}</div>
+      <div class="today-sub">${z2?'Incline treadmill, <b>45–60 minutes</b>. You can talk in full sentences but not sing.':'Easy pace outside, <b>45–90 minutes</b>, or a full rest day if you feel beaten up.'}</div>
+      ${z2?rcHRLine('z2'):''}
+      ${done?`<div class="rc-done">✓ LOGGED TODAY</div>`:`<div class="rc-row"><label for="rcMin">MINUTES</label><input id="rcMin" type="number" inputmode="numeric" value="${z2?50:60}">
+      <button class="big" id="rcLogWalk" data-type="${slot}" style="flex:1;padding:12px">LOG ${z2?'ZONE 2':'WALK'}</button></div>`}</div>`;
+  } else {
+    const n=rcIntervals||rcDefaultIntervals(), c=rc4x4Count(), done=rcLogged(today(),'4x4');
+    const ramp=c<3?`Ramp-up session ${c+1} of 3: 3 intervals, at the low end of the range.`:'Full 4×4. Add speed or incline when the last interval feels easier than the first.';
+    body=`<div class="today-card"><div class="eyebrow">${when} · VO2 max</div>
+      <div class="today-title">4×4 intervals</div>
+      <div class="today-sub">${ramp}</div>
+      <ul class="rc-list">
+        <li><span class="k">10 MIN</span><div>Warm-up, easy</div></li>
+        <li><span class="k">${n} ×</span><div>4 min hard, 3 min easy<small>Hard means you can only get out a few words at a time.</small></div></li>
+        <li><span class="k">5 MIN</span><div>Cool-down</div></li></ul>
+      ${rcHRLine('hard')}
+      <div class="rc-seg" role="group" aria-label="Intervals"><button data-n="3" class="${n===3?'on':''}">3 INTERVALS · ${rcMinutes(3)} MIN</button><button data-n="4" class="${n===4?'on':''}">4 INTERVALS · ${rcMinutes(4)} MIN</button></div>
+      ${done?`<div class="rc-done">✓ 4×4 LOGGED TODAY</div>`:`<button class="big" id="rcStart">START TIMER</button>
+      <button class="rc-ghost" id="rcLogVo2">LOG WITHOUT THE TIMER</button>`}</div>`;
+  }
+  return `<div class="rc-strip">${strip}</div>${sum}${body}`;
+}
+
+/* ---------- 4x4 timer: runs on timestamps, so a locked phone does not drift ---------- */
+function timerHTML(){
+  const ph=timer.phases[timer.idx], rem=timer.paused?timer.remain:(timer.endAt-Date.now())/1000, nxt=timer.phases[timer.idx+1];
+  const total=timer.phases.reduce((a,p)=>a+p.sec,0), doneSec=timer.phases.slice(0,timer.idx).reduce((a,p)=>a+p.sec,0)+(ph.sec-rem);
+  return `<div class="tmr ${ph.k}" id="tmr"><div class="tmr-phase">${ph.label}</div>
+    <div class="tmr-clock" id="tmrClock">${mmss(Math.ceil(rem))}</div>
+    <div class="tmr-next">${nxt?`Next: ${nxt.label}`:'Last part'}</div>
+    <div class="tmr-bar"><span id="tmrBar" style="width:${Math.min(100,doneSec/total*100)}%"></span></div>
+    <div class="tmr-btns"><button id="tmrPause">${timer.paused?'RESUME':'PAUSE'}</button><button id="tmrSkip">SKIP</button><button id="tmrStop">STOP</button></div></div>`;
+}
+function cue(){
+  try{ navigator.vibrate&&navigator.vibrate([220,90,220]); }catch(e){}
+  try{
+    const C=window.AudioContext||window.webkitAudioContext; if(!C)return;
+    const ctx=cue.ctx||(cue.ctx=new C()); if(ctx.state==='suspended')ctx.resume();
+    const o=ctx.createOscillator(), g=ctx.createGain(); o.frequency.value=880;
+    g.gain.setValueAtTime(.0001,ctx.currentTime); g.gain.exponentialRampToValueAtTime(.3,ctx.currentTime+.02);
+    g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.45); o.connect(g).connect(ctx.destination); o.start(); o.stop(ctx.currentTime+.5);
+  }catch(e){}
+}
+async function lockScreen(on){
+  try{
+    if(on&&navigator.wakeLock&&!wakeLock){ wakeLock=await navigator.wakeLock.request('screen'); }
+    if(!on&&wakeLock){ await wakeLock.release(); wakeLock=null; }
+  }catch(e){ wakeLock=null; }
+}
+function startTimer(n){
+  timer={n,phases:rcPhases(n),idx:0,started:Date.now(),paused:false};
+  timer.endAt=Date.now()+timer.phases[0].sec*1000;
+  cue(); lockScreen(true);
+  clearInterval(timerTick); timerTick=setInterval(tickTimer,250);
+  render(); window.scrollTo({top:0});
+}
+function finishTimer(completed){
+  clearInterval(timerTick); timerTick=null; lockScreen(false);
+  const t=timer; timer=null;
+  if(completed){ cue(); rcLog('4x4',{intervals:t.n,min:Math.round((Date.now()-t.started)/60000)}); toast(`4×4 logged · ${t.n} intervals`); }
+  else render();
+}
+function tickTimer(){
+  if(!timer||timer.paused)return;
+  let changed=false;
+  while(timer&&Date.now()>=timer.endAt){
+    if(timer.idx>=timer.phases.length-1){ finishTimer(true); return; }
+    timer.idx++; timer.endAt+=timer.phases[timer.idx].sec*1000; changed=true;
+  }
+  if(changed)cue();
+  const el=document.getElementById('tmr'); if(!el)return;
+  if(changed){ el.outerHTML=timerHTML(); wireTimer(); return; }
+  const ph=timer.phases[timer.idx], rem=(timer.endAt-Date.now())/1000;
+  const total=timer.phases.reduce((a,p)=>a+p.sec,0), doneSec=timer.phases.slice(0,timer.idx).reduce((a,p)=>a+p.sec,0)+(ph.sec-rem);
+  document.getElementById('tmrClock').textContent=mmss(Math.ceil(rem));
+  document.getElementById('tmrBar').style.width=Math.min(100,doneSec/total*100)+'%';
+}
+function wireTimer(){
+  const p=document.getElementById('tmrPause'), k=document.getElementById('tmrSkip'), x=document.getElementById('tmrStop');
+  if(p)p.onclick=()=>{
+    if(timer.paused){ timer.endAt=Date.now()+timer.remain*1000; timer.paused=false; lockScreen(true); }
+    else { timer.remain=(timer.endAt-Date.now())/1000; timer.paused=true; lockScreen(false); }
+    render();
+  };
+  if(k)k.onclick=()=>{
+    if(timer.idx>=timer.phases.length-1){ finishTimer(true); return; }
+    timer.idx++; const sec=timer.phases[timer.idx].sec;
+    if(timer.paused) timer.remain=sec; else timer.endAt=Date.now()+sec*1000;
+    cue(); render();
+  };
+  if(x)x.onclick=()=>{
+    const hardDone=timer.phases.slice(0,timer.idx+1).filter(q=>q.k==='hard').length;
+    if(hardDone>=2&&confirm(`Stop here and log ${hardDone} intervals?`)){ timer.n=hardDone; finishTimer(true); return; }
+    if(hardDone<2&&!confirm('Stop the timer? Nothing will be logged.'))return;
+    finishTimer(false);
+  };
+}
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&timer&&!timer.paused){ lockScreen(true); tickTimer(); } });
+
+function wireRecomp(){
+  document.querySelectorAll('[data-rcday]').forEach(b=>b.onclick=()=>{ rcSel=+b.dataset.rcday; render(); });
+  const age=document.getElementById('rcAge');
+  if(age)age.onchange=()=>{ const v=+age.value; DB.age=(v>=14&&v<=99)?v:null; save(); render(); };
+  const open=document.getElementById('rcOpen');
+  if(open)open.onclick=()=>{ viewMode='strength'; view=nextDay(); render(); window.scrollTo({top:0}); };
+  const j=document.getElementById('rcJumps'); if(j)j.onclick=()=>{ rcLog('jumps'); toast('Jumps logged'); };
+  const w=document.getElementById('rcLogWalk');
+  if(w)w.onclick=()=>{ const m=+document.getElementById('rcMin').value||0; rcLog(w.dataset.type,{min:m}); toast(`${w.dataset.type==='z2'?'Zone 2':'Walk'} logged · ${m} min`); };
+  document.querySelectorAll('.rc-seg [data-n]').forEach(b=>b.onclick=()=>{ rcIntervals=+b.dataset.n; render(); });
+  const st=document.getElementById('rcStart'); if(st)st.onclick=()=>startTimer(rcIntervals||rcDefaultIntervals());
+  const lv=document.getElementById('rcLogVo2');
+  if(lv)lv.onclick=()=>{ const n=rcIntervals||rcDefaultIntervals(); rcLog('4x4',{intervals:n}); toast(`4×4 logged · ${n} intervals`); };
+  if(timer)wireTimer();
+}
+
 /* ================= PROFILE SWITCHING ================= */
 function closeSwitcher(){ const sw=document.getElementById('switcher'); if(sw)sw.hidden=true; }
 function setViewFromSlot(){ viewMode='strength'; view=nextDay(); }
@@ -1809,7 +2049,7 @@ async function loadDBFor(id,planKey){
       return { next:p.next||{}, history:p.history||[], active:p.active||null,
                holds:p.holds||{}, cycleStarts:p.cycleStarts||[],
                focus:p.focus||null, injuries:p.injuries||[],
-               cycleAnchor:p.cycleAnchor||null };
+               cycleAnchor:p.cycleAnchor||null, cardio:p.cardio||[], age:p.age||null };
     }catch(e){}
   }
   return defaultDB(planKey);
@@ -1843,6 +2083,11 @@ document.getElementById('week').addEventListener('click',e=>{
 document.getElementById('histBtn').addEventListener('click',()=>{
   setupOpen=false;
   viewMode = viewMode==='history' ? 'strength' : 'history';
+  render(); window.scrollTo({top:0});
+});
+document.getElementById('recompBtn').addEventListener('click',()=>{
+  setupOpen=false; rcSel=null;
+  viewMode = viewMode==='recomp' ? 'strength' : 'recomp';
   render(); window.scrollTo({top:0});
 });
 document.getElementById('avatarBtn').addEventListener('click',e=>{
@@ -1919,6 +2164,7 @@ document.getElementById('file').addEventListener('change',ev=>{
       DB.cycleStarts=p.cycleStarts||[];
       DB.focus=p.focus||null; DB.injuries=p.injuries||[];
       DB.cycleAnchor=p.cycleAnchor||null;
+      DB.cardio=p.cardio||[]; DB.age=p.age||null;
       setActivePlan();
       save();render();toast(`Imported ${DB.history.length} session${DB.history.length===1?'':'s'}`);
     }catch(e){toast('That file is not a valid export')}
