@@ -399,6 +399,7 @@
   .rc-list{list-style:none;margin:14px 0;padding:0;display:flex;flex-direction:column;gap:8px}
   .rc-list li{display:flex;gap:10px;align-items:flex-start;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.055);border-radius:11px;padding:11px 12px;font-size:13.5px;line-height:1.45;color:var(--bone)}
   .rc-list li small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+  .rc-list li>div{flex:1}.rc-list li .vid{margin-left:auto}
   .rc-list li .k{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--accent);min-width:46px;padding-top:2px;letter-spacing:.06em}
   .rc-hr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin:4px 0 2px}
   .rc-hr input,.rc-row input{width:72px;height:40px;border-radius:8px;border:1px solid var(--rule);background:#131B1F;color:var(--bone);font-family:"IBM Plex Mono",monospace;font-size:14px;text-align:center}
@@ -1206,14 +1207,15 @@ function loEnergyW(ex,w){
   if(!w)return 0;
   return Math.max(0, Math.floor((w*0.85)/5)*5);
 }
-const ytURL=ex=>`https://www.youtube.com/results?search_query=${encodeURIComponent(QMAP[ex.id]||ex.n+' proper form')}`;
+const RC_Q={rc_pogo:"pogo hops exercise how to",rc_box:"box jump step down beginner form",
+  rc_4x4:"norwegian 4x4 interval training treadmill",rc_z2:"zone 2 incline treadmill walk"};
+const ytURL=ex=>`https://www.youtube.com/results?search_query=${encodeURIComponent(QMAP[ex.id]||RC_Q[ex.id]||ex.n+' proper form')}`;
 const vid=ex=>`<button class="vid" data-yt="${ex.id}" title="Form video" aria-label="Form video"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></button>`;
+/* A real link click: window.open(...,'noopener') always returns null, which used to
+   trigger the "link copied" fallback even when the video had opened. */
 function openVid(ex){
-  const u=ytURL(ex); let w=null;
-  try{w=window.open(u,'_blank','noopener')}catch(e){}
-  if(w)return;
-  try{navigator.clipboard.writeText(u);toast('Preview blocks new tabs — link copied')}
-  catch(e){toast('Open the file locally to use video links')}
+  const a=document.createElement('a'); a.href=ytURL(ex); a.target='_blank'; a.rel='noopener';
+  document.body.appendChild(a); a.click(); a.remove();
 }
 
 /* ================= WEEK / CARDIO ================= */
@@ -1872,6 +1874,20 @@ function rcSlotDone(slot,date){
   return Object.values(rcWeekDates()).some(d=>rcLogged(d,type));
 }
 const rcIsLegs=d=>/^legs/i.test((PLAN[d]&&PLAN[d].name)||'');
+/* Each lift slot this week gets its own workout: past slots show what was logged that
+   day (or "missed"); today and later continue the rotation in order from what is next. */
+function rcLiftPlan(dates,week){
+  const n=DAYS().length, t=today(), out={}; let next=nextDay();
+  RC_ORDER.forEach(w=>{
+    if(week[w]!=='lift')return;
+    const d=dates[w], h=DB.history.find(x=>x.date===d);
+    if(h&&PLAN[h.day]){ out[w]={day:h.day,status:'done'}; return; }
+    if(d<t){ out[w]={day:null,status:'missed'}; return; }
+    out[w]={day:next,status:'planned'}; next=(next%n)+1;
+  });
+  return out;
+}
+const rcItem=(k,title,how,yt)=>`<li><span class="k">${k}</span><div>${title}${how?`<small>${how}</small>`:''}</div>${yt?vid({id:yt,n:title}):''}</li>`;
 function rcHR(){
   const a=+DB.age; if(!a||a<14||a>99)return null;
   const max=Math.round(208-0.7*a);                     // Tanaka estimate
@@ -1904,11 +1920,12 @@ const mmss=s=>`${Math.floor(s/60)}:${String(Math.max(0,Math.floor(s%60))).padSta
 
 function recompView(){
   const dates=rcWeekDates(), tWd=rcWeekday(today());
-  const RC_WEEK=rcWeek(), sel=rcSel==null?tWd:rcSel, slot=RC_WEEK[sel], isToday=sel===tWd;
+  const RC_WEEK=rcWeek(), sel=rcSel==null?tWd:rcSel, slot=RC_WEEK[sel], isToday=sel===tWd, liftPlan=rcLiftPlan(dates,RC_WEEK);
   const strip=RC_ORDER.map(w=>{
     const st=RC_WEEK[w], cls=['rc-chip'];
     if(w===tWd)cls.push('today'); if(w===sel)cls.push('on'); if(rcSlotDone(st,dates[w]))cls.push('done');
-    return `<button class="${cls.join(' ')}" data-rcday="${w}" aria-label="${RC_ABBR[w]} ${RC_SLOT[st]}">${RC_ABBR[w]}<b${RC_SLOT[st].length>4?' class="sm"':''}>${RC_SLOT[st]}</b></button>`;
+    const lp=liftPlan[w], lab=st==='lift'?(lp&&lp.day?PLAN[lp.day].short:'—'):RC_SLOT[st];
+    return `<button class="${cls.join(' ')}" data-rcday="${w}" aria-label="${RC_ABBR[w]} ${st==='lift'&&lp&&lp.day?PLAN[lp.day].name:RC_SLOT[st]}">${RC_ABBR[w]}<b${lab.length>4?' class="sm"':''}>${lab}</b></button>`;
   }).join('');
   const wk=Object.values(dates);
   const sum=`<div class="rc-sum">THIS WEEK · ${wk.filter(rcLifted).length}/4 LIFT · `
@@ -1920,16 +1937,25 @@ function recompView(){
   if(timer){
     body=`<div class="today-card"><div class="eyebrow">4×4 VO2 intervals</div>${timerHTML()}</div>`;
   } else if(slot==='lift'){
-    const nd=nextDay(), legs=rcIsLegs(nd), jumpsDone=rcLogged(today(),'jumps');
-    body=`<div class="today-card"><div class="eyebrow">${when} · strength</div>
-      <div class="today-title">${PLAN[nd].name}</div>
-      <div class="today-sub">Next in your rotation. Lead with the first lift <b>heavy, 4–6 reps</b>, and end every set 1–2 reps short of failure.</div>
-      ${legs?`<ul class="rc-list">
-        <li><span class="k">IMPACT</span><div>Pogo hops · 3 × 10<small>Quick, stiff ankles, land softly. Bone responds to impact.</small></div></li>
-        <li><span class="k">IMPACT</span><div>Box jumps · 3 × 5<small>Jump up, step down. Start with a low box.</small></div></li></ul>
-        ${jumpsDone?`<div class="rc-done">✓ JUMPS LOGGED TODAY</div>`:`<button class="rc-ghost" id="rcJumps">JUMPS DONE (~5 MIN)</button>`}`
-      :`<p class="today-sub" style="margin-top:10px">Upper day: no jumps. Heavy presses and carries still load your bones.</p>`}
-      <button class="big" id="rcOpen" style="margin-top:14px">OPEN ${PLAN[nd].name}</button></div>`;
+    const lp=liftPlan[sel]||{status:'missed'};
+    if(lp.status==='missed'){
+      body=`<div class="today-card"><div class="eyebrow">${when} · strength</div>
+        <div class="today-title">Missed lift</div>
+        <div class="today-sub">Nothing logged that day. No problem: the rotation just continues, so next up is <b>${PLAN[nextDay()].name}</b>.</div></div>`;
+    } else {
+      const nd=lp.day, legs=rcIsLegs(nd), jumpsDone=rcLogged(dates[sel],'jumps'), canLog=isToday;
+      const lead=requiredItems(nd)[0];
+      body=`<div class="today-card"><div class="eyebrow">${when} · strength${lp.status==='done'?' · done':''}</div>
+        <div class="today-title">${PLAN[nd].name}</div>
+        <div class="today-sub">${lp.status==='done'?'Logged.':isToday?'Today’s workout.':'Planned. If you miss a day, everything after it shifts by one.'}
+          ${lead?` Do <b>${lead.n}</b> first and heavy: 4–6 reps, ending each set 1–2 reps short of failure.`:''}</div>
+        ${legs?`<div class="eyebrow" style="margin-top:16px">Before you lift · 5 min</div><ul class="rc-list">
+          ${rcItem('3 × 10','Pogo hops','Bounce on the balls of your feet, knees almost straight, quick and light. 30 s rest between sets.','rc_pogo')}
+          ${rcItem('3 × 5','Box jumps','Low box (30–40 cm). Jump up, stand tall, then <b>step</b> down. 60 s rest.','rc_box')}</ul>
+          ${canLog?(jumpsDone?`<div class="rc-done">✓ JUMPS LOGGED TODAY</div>`:`<button class="rc-ghost" id="rcJumps">JUMPS DONE</button>`):''}`
+        :`<p class="today-sub" style="margin-top:10px">Upper day: no jumps.</p>`}
+        ${lp.status==='planned'||isToday?`<button class="big" id="rcOpen" data-day="${nd}" style="margin-top:14px">${isToday?'START':'VIEW'} ${PLAN[nd].name}</button>`:''}</div>`;
+    }
   } else if(slot==='office'){
     const done=rcLogged(today(),'office');
     body=`<div class="today-card"><div class="eyebrow">${when} · office day</div>
@@ -1941,8 +1967,8 @@ function recompView(){
     const done=rcLogged(today(),slot), z2=slot==='z2';
     body=`<div class="today-card"><div class="eyebrow">${when} · ${z2?'aerobic base':'recovery'}</div>
       <div class="today-title">${z2?'Zone 2 walk':'Long walk or rest'}</div>
-      <div class="today-sub">${z2?'Incline treadmill, <b>45–60 minutes</b>. You can talk in full sentences but not sing.':'Easy pace outside, <b>45–90 minutes</b>, or a full rest day if you feel beaten up.'}</div>
-      ${z2?rcHRLine('z2'):''}
+      <div class="today-sub">${z2?'<b>45–60 minutes</b> at a pace where you can talk in full sentences but not sing.':'Easy pace outside, <b>45–90 minutes</b>, or a full rest day if you feel beaten up.'}</div>
+      ${z2?`<ul class="rc-list">${rcItem('START','Treadmill 5.5 km/h at 8% incline','Raise or lower the incline to keep your heart rate in the range below.','rc_z2')}</ul>${rcHRLine('z2')}`:''}
       ${done?`<div class="rc-done">✓ LOGGED TODAY</div>`:`<div class="rc-row"><label for="rcMin">MINUTES</label><input id="rcMin" type="number" inputmode="numeric" value="${z2?50:60}">
       <button class="big" id="rcLogWalk" data-type="${slot}" style="flex:1;padding:12px">LOG ${z2?'ZONE 2':'WALK'}</button></div>`}</div>`;
   } else {
@@ -1952,9 +1978,11 @@ function recompView(){
       <div class="today-title">4×4 intervals</div>
       <div class="today-sub">${ramp}</div>
       <ul class="rc-list">
-        <li><span class="k">10 MIN</span><div>Warm-up, easy</div></li>
-        <li><span class="k">${n} ×</span><div>4 min hard, 3 min easy<small>Hard means you can only get out a few words at a time.</small></div></li>
-        <li><span class="k">5 MIN</span><div>Cool-down</div></li></ul>
+        ${rcItem('10 MIN','Warm-up','Treadmill 5 km/h at 5% incline.','')}
+        ${rcItem('4 MIN','Hard','Fast walk at 10–12% incline, or a jog at 9–10 km/h flat. By minute 2 you can only say a few words.','rc_4x4')}
+        ${rcItem('3 MIN','Easy','Drop to 5 km/h, 0–3% incline. Breathe, recover.','')}
+        ${rcItem(n+' ×','Repeat hard + easy','The timer runs it for you and beeps at each change.','')}
+        ${rcItem('5 MIN','Cool-down','Slow walk.','')}</ul>
       ${rcHRLine('hard')}
       <div class="rc-seg" role="group" aria-label="Intervals"><button data-n="3" class="${n===3?'on':''}">3 INTERVALS · ${rcMinutes(3)} MIN</button><button data-n="4" class="${n===4?'on':''}">4 INTERVALS · ${rcMinutes(4)} MIN</button></div>
       ${done?`<div class="rc-done">✓ 4×4 LOGGED TODAY</div>`:`<button class="big" id="rcStart">START TIMER</button>
@@ -2045,7 +2073,8 @@ function wireRecomp(){
   const age=document.getElementById('rcAge');
   if(age)age.onchange=()=>{ const v=+age.value; DB.age=(v>=14&&v<=99)?v:null; save(); render(); };
   const open=document.getElementById('rcOpen');
-  if(open)open.onclick=()=>{ viewMode='strength'; view=nextDay(); render(); window.scrollTo({top:0}); };
+  if(open)open.onclick=()=>{ viewMode='strength'; view=+open.dataset.day||nextDay(); render(); window.scrollTo({top:0}); };
+  document.querySelectorAll('#list .rc-list [data-yt]').forEach(b=>b.onclick=e=>{ e.preventDefault(); openVid({id:b.dataset.yt,n:''}); });
   const j=document.getElementById('rcJumps'); if(j)j.onclick=()=>{ rcLog('jumps'); toast('Jumps logged'); };
   const w=document.getElementById('rcLogWalk');
   if(w)w.onclick=()=>{ const m=+document.getElementById('rcMin').value||0, t=w.dataset.type;
