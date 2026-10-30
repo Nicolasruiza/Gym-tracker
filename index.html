@@ -419,6 +419,7 @@
   .tmr-bar{height:7px;border-radius:99px;background:#303632;margin:14px 0;overflow:hidden}.tmr-bar span{display:block;height:100%;background:var(--accent);width:0}
   .tmr-btns{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
   .tmr-btns button{min-height:48px;border:1px solid var(--rule);border-radius:10px;background:var(--card2);color:var(--bone);font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;cursor:pointer}
+  .blk.optional span{color:var(--brass)}.blk.optional i{background:none;height:0;border-top:1px dashed var(--rule)}
 </style>
 </head>
 <body>
@@ -458,49 +459,47 @@
    Upper B), so 3-day history maps straight onto it. */
 const PLAN_NR={
  1:{name:"Upper A",short:"U-A",blocks:[
-  {t:"Core · do first",items:[
-   {id:"leg_raise",n:"Hanging leg raise",r:10,w:0,inc:0,bw:1,frac:0}]},
   {t:"Basics · free weight",items:[
    {id:"bb_press",n:"Barbell press",r:6,w:135,inc:5,key:1,bar:45,frac:.696},
    {id:"lat_pull",n:"Lat pulldown",r:8,w:75,inc:5,key:1,mult:2,frac:.387}]},
   {t:"Compound",items:[
    {id:"db_ohp",n:"Dumbbell shoulder press",r:8,w:35,inc:5,each:1,frac:.180},
    {id:"cbl_row",n:"Cable row",r:10,w:70,inc:5,frac:.361}]},
-  {t:"Isolation · superset",items:[
+  {t:"Bonus · if time",items:[
    {id:"db_curl",n:"Dumbbell bicep curl",r:12,w:30,inc:5,each:1,frac:.155},
-   {id:"cbl_tri",n:"Cable triceps extension",r:12,w:60,inc:5,frac:.309}]}]},
+   {id:"cbl_tri",n:"Cable triceps extension",r:12,w:60,inc:5,frac:.309},
+   {id:"leg_raise",n:"Hanging leg raise",r:10,w:0,inc:0,bw:1,frac:0}]}]},
  2:{name:"Legs A",short:"LEG-A",blocks:[
-  {t:"Core · do first",items:[
-   {id:"pallof",n:"Pallof press (per side)",r:12,w:30,inc:5,frac:.155}]},
   {t:"Basics · free weight",items:[
    {id:"gob_squat",n:"Goblet squat",r:8,w:50,inc:5,key:1,frac:.258},
    {id:"hip_thrust",n:"Barbell hip thrust",r:10,w:95,inc:10,key:1,bar:45,frac:.490}]},
   {t:"Compound",items:[
    {id:"split_squat",n:"Dumbbell split squat (per leg)",r:10,w:25,inc:5,each:1,frac:.129},
    {id:"sb_squat",n:"Single-leg box squat (per leg)",r:8,w:0,inc:5,bw:1,frac:0}]},
-  {t:"Isolation",items:[
-   {id:"hip_abd",n:"Hip abduction",r:15,w:70,inc:10,frac:.361}]}]},
+  {t:"Bonus · if time",items:[
+   {id:"hip_abd",n:"Hip abduction",r:15,w:70,inc:10,frac:.361},
+   {id:"pallof",n:"Pallof press (per side)",r:12,w:30,inc:5,frac:.155}]}]},
  3:{name:"Upper B",short:"U-B",blocks:[
-  {t:"Core · do first",items:[{id:"cbl_crunch",n:"Cable crunch",r:15,w:50,inc:5,frac:.258}]},
   {t:"Basics",items:[
    {id:"db_incl",n:"Dumbbell incline bench press",r:8,w:45,inc:5,each:1,key:1,frac:.232},
    {id:"pullup",n:"Pull-ups",r:8,w:0,inc:5,bw:1,key:1,frac:0}]},
   {t:"Compound",items:[
-   {id:"db_row",n:"Dumbbell row",r:8,w:50,inc:5,frac:.258}]},
-  {t:"Isolation",items:[
+   {id:"db_row",n:"Dumbbell row",r:8,w:50,inc:5,frac:.258},
    {id:"lat_raise",n:"Lateral raise",r:15,w:15,inc:5,each:1,frac:.077}]},
-  {t:"Isolation · superset",items:[
+  {t:"Bonus · if time",items:[
    {id:"hammer",n:"Hammer curls",r:12,w:25,inc:5,each:1,frac:.129},
-   {id:"skull",n:"Skull crusher",r:12,w:40,inc:5,bar:25,frac:.206}]}]},
+   {id:"skull",n:"Skull crusher",r:12,w:40,inc:5,bar:25,frac:.206},
+   {id:"cbl_crunch",n:"Cable crunch",r:15,w:50,inc:5,frac:.258}]}]},
  4:{name:"Legs B",short:"LEG-B",blocks:[
-  {t:"Balance · do first",items:[{id:"sl_rdl",n:"Single-leg RDL, bodyweight (per leg)",r:10,w:0,inc:0,bw:1,frac:0}]},
+  {t:"Warm-up · balance",items:[{id:"sl_rdl",n:"Single-leg RDL, bodyweight (per leg)",r:10,w:0,inc:0,bw:1,frac:0}]},
   {t:"Basics · free weight",items:[
    {id:"rdl",n:"Romanian deadlift",r:6,w:95,inc:10,key:1,bar:45,frac:.490},
    {id:"step_up",n:"Dumbbell step-up (per leg)",r:10,w:25,inc:5,each:1,key:1,frac:.129}]},
-  {t:"Compound",items:[{id:"leg_press",n:"Leg press",r:10,w:180,inc:10,plates:1,frac:.928}]},
-  {t:"Isolation",items:[
-   {id:"ham_curl",n:"Lying hamstring curl",r:12,w:80,inc:10,frac:.412},
-   {id:"farmer",n:"Farmer carry (seconds)",r:40,w:50,inc:5,each:1,frac:.258}]}]}
+  {t:"Compound",items:[
+   {id:"leg_press",n:"Leg press",r:10,w:180,inc:10,plates:1,frac:.928},
+   {id:"farmer",n:"Farmer carry (seconds)",r:40,w:50,inc:5,each:1,frac:.258}]},
+  {t:"Bonus · if time",items:[
+   {id:"ham_curl",n:"Lying hamstring curl",r:12,w:80,inc:10,frac:.412}]}]}
 };
 /* The previous 3-day plan. Not used for training any more; kept so lifts that left
    the plan (fly, face pull, barbell curl, calf raise) still resolve in history. */
@@ -546,49 +545,47 @@ const PLAN_NR3={
 /* Sofia's plan, same 4-day Upper / Legs / Upper / Legs shape as Nicolas's, her own loads. */
 const PLAN_SA={
  1:{name:"Upper A",short:"U-A",blocks:[
-  {t:"Core · do first",items:[
-   {id:"sa_dead_bug",n:"Dead bug",r:10,w:0,inc:0,bw:1}]},
   {t:"Basics · free weight",items:[
    {id:"sa_db_bench",n:"Dumbbell bench press",r:8,w:15,inc:5,key:1,each:1},
    {id:"sa_lat_pull",n:"Lat pulldown",r:10,w:30,inc:5,key:1,mult:2}]},
   {t:"Compound",items:[
    {id:"sa_db_ohp",n:"Dumbbell shoulder press",r:10,w:10,inc:5,each:1},
    {id:"sa_cbl_row",n:"Seated cable row",r:10,w:40,inc:5}]},
-  {t:"Isolation · superset",items:[
+  {t:"Bonus · if time",items:[
    {id:"sa_db_curl",n:"Dumbbell bicep curl",r:12,w:10,inc:5,each:1},
-   {id:"sa_cbl_tri",n:"Cable triceps extension",r:12,w:20,inc:5}]}]},
+   {id:"sa_cbl_tri",n:"Cable triceps extension",r:12,w:20,inc:5},
+   {id:"sa_dead_bug",n:"Dead bug",r:10,w:0,inc:0,bw:1}]}]},
  2:{name:"Legs A",short:"LEG-A",blocks:[
-  {t:"Core · do first",items:[
-   {id:"sa_pallof",n:"Pallof press (per side)",r:12,w:15,inc:5}]},
   {t:"Basics · free weight",items:[
    {id:"sa_gob_squat",n:"Goblet squat",r:10,w:20,inc:5,key:1},
    {id:"sa_hip_thrust",n:"Hip thrust",r:12,w:65,inc:5,key:1}]},
   {t:"Compound",items:[
    {id:"sa_split_squat",n:"Dumbbell split squat (per leg)",r:10,w:10,inc:5,each:1},
    {id:"sa_sb_squat",n:"Single-leg box squat (per leg)",r:8,w:0,inc:5,bw:1}]},
-  {t:"Isolation",items:[
-   {id:"sa_hip_abd",n:"Hip abduction",r:15,w:40,inc:5}]}]},
+  {t:"Bonus · if time",items:[
+   {id:"sa_hip_abd",n:"Hip abduction",r:15,w:40,inc:5},
+   {id:"sa_pallof",n:"Pallof press (per side)",r:12,w:15,inc:5}]}]},
  3:{name:"Upper B",short:"U-B",blocks:[
-  {t:"Core · do first",items:[{id:"sa_side_plank",n:"Side plank (seconds per side)",r:20,w:0,inc:0,bw:1}]},
   {t:"Basics",items:[
    {id:"sa_db_incl",n:"Dumbbell incline press",r:10,w:12,inc:5,key:1,each:1},
    {id:"sa_pulldown2",n:"Assisted pull-up / lat pulldown",r:10,w:35,inc:5,key:1,mult:2}]},
   {t:"Compound",items:[
-   {id:"sa_cs_row",n:"Chest-supported row",r:10,w:30,inc:5}]},
-  {t:"Isolation",items:[
+   {id:"sa_cs_row",n:"Chest-supported row",r:10,w:30,inc:5},
    {id:"sa_lat_raise",n:"Lateral raise",r:15,w:5,inc:5,each:1}]},
-  {t:"Isolation · superset",items:[
+  {t:"Bonus · if time",items:[
    {id:"sa_hammer",n:"Hammer curls",r:12,w:10,inc:5,each:1},
-   {id:"sa_rope_tri",n:"Rope triceps pushdown",r:15,w:20,inc:5}]}]},
+   {id:"sa_rope_tri",n:"Rope triceps pushdown",r:15,w:20,inc:5},
+   {id:"sa_side_plank",n:"Side plank (seconds per side)",r:20,w:0,inc:0,bw:1}]}]},
  4:{name:"Legs B",short:"LEG-B",blocks:[
-  {t:"Balance · do first",items:[{id:"sa_sl_rdl",n:"Single-leg RDL, bodyweight (per leg)",r:10,w:0,inc:0,bw:1}]},
+  {t:"Warm-up · balance",items:[{id:"sa_sl_rdl",n:"Single-leg RDL, bodyweight (per leg)",r:10,w:0,inc:0,bw:1}]},
   {t:"Basics · free weight",items:[
    {id:"sa_rdl",n:"Dumbbell Romanian deadlift",r:10,w:30,inc:5,key:1},
    {id:"sa_step_up",n:"Dumbbell step-up (per leg)",r:10,w:10,inc:5,each:1,key:1}]},
-  {t:"Compound",items:[{id:"sa_leg_press",n:"Leg press",r:12,w:90,inc:5,plates:1}]},
-  {t:"Isolation",items:[
-   {id:"sa_ham_curl",n:"Lying hamstring curl",r:12,w:30,inc:5},
-   {id:"sa_farmer",n:"Farmer carry (seconds)",r:30,w:20,inc:5,each:1}]}]}
+  {t:"Compound",items:[
+   {id:"sa_leg_press",n:"Leg press",r:12,w:90,inc:5,plates:1},
+   {id:"sa_farmer",n:"Farmer carry (seconds)",r:30,w:20,inc:5,each:1}]},
+  {t:"Bonus · if time",items:[
+   {id:"sa_ham_curl",n:"Lying hamstring curl",r:12,w:30,inc:5}]}]}
 };
 /* Sofia's previous 3-day plan, kept so retired lifts still resolve in history. */
 const PLAN_SA3={
@@ -1249,8 +1246,13 @@ function cycleDayNum(){
   return dayDiff(last,today())+1;
 }
 
+/* "Bonus · if time" and warm-up blocks are optional: they never count against finishing a
+   session, and low-energy days drop them (plus any legacy Isolation block). */
+const isOptionalBlock=t=>/^(bonus|warm-up|isolation)/i.test(t||'');
+const requiredItems=day=>PLAN[day].blocks.filter(b=>!isOptionalBlock(b.t)).flatMap(b=>b.items);
+const MIN_PER_LIFT=12;   // measured: ~12 minutes per lift including setup and rest
 function sessionItems(day,lowEnergy){
-  return PLAN[day].blocks.filter(b=>!(lowEnergy&&b.t.startsWith('Isolation'))).flatMap(b=>b.items);
+  return PLAN[day].blocks.filter(b=>!(lowEnergy&&isOptionalBlock(b.t))).flatMap(b=>b.items);
 }
 function recentStreak(){
   if(!DB.history.length)return 0;
@@ -1325,16 +1327,17 @@ function render(){
   L.innerHTML='';
   const A=DB.active, live=A&&A.day===view;
   const visible=sessionItems(view,live&&A.lowEnergy);
-  const current=live?visible.find(ex=>{
-    const loggedId=(A.swaps&&A.swaps[ex.id])||ex.id;
-    return !A.entries[loggedId];
-  }):null;
+  const unlogged=ex=>!A.entries[(A.swaps&&A.swaps[ex.id])||ex.id];
+  const req=new Set(requiredItems(view).map(x=>x.id));
+  const bonus=new Set(PLAN[view].blocks.filter(b=>/^bonus/i.test(b.t)).flatMap(b=>b.items.map(x=>x.id)));
+  const current=live?(visible.find(ex=>req.has(ex.id)&&unlogged(ex))||visible.find(ex=>bonus.has(ex.id)&&unlogged(ex))||visible.find(unlogged)):null;
   const focused=live&&focusedExId?visible.find(ex=>ex.id===focusedExId):null;
   const expanded=focused||current;
   PLAN[view].blocks.forEach(b=>{
-    if(live && A.lowEnergy && b.t.startsWith('Isolation')) return;
+    if(live && A.lowEnergy && isOptionalBlock(b.t)) return;
     const h=document.createElement('div');h.className='blk';
     if(expanded&&b.items.some(x=>x.id===expanded.id))h.classList.add('current-block');
+    if(isOptionalBlock(b.t))h.classList.add('optional');
     h.innerHTML=`<span>${b.t}</span><i></i>`;L.appendChild(h);
     b.items.forEach(ex=>{
       const to = live && A.swaps && A.swaps[ex.id];
@@ -1354,13 +1357,14 @@ function sessBox(){
   const A=DB.active;
   const cycleHtml = profile.cycle ? `<button class="cyclebtn" id="cycleBtn">PERIOD STARTED TODAY</button>` : '';
   if(A&&A.day===view){
-    const n=Object.keys(A.entries).length, tot=sessionItems(view,A.lowEnergy).length;
+    const reqs=requiredItems(view), isLogged=ex=>!!A.entries[(A.swaps&&A.swaps[ex.id])||ex.id];
+    const n=reqs.filter(isLogged).length, tot=reqs.length, extra=Object.keys(A.entries).length-n;
     let vol=0;Object.entries(A.entries).forEach(([id,e])=>{vol+=volOf(id,e.w,e.reps)});
     const loweHtml = profile.lowEnergy?`<button class="lowe ${A.lowEnergy?'on':''}" id="lowEnergyBtn">LOW ENERGY DAY${A.lowEnergy?' · ON':''}</button>`:'';
     return `<div class="sess live">
       <div class="st"><span class="dot go"></span><b>Session in progress · ${PLAN[view].name}</b>${svChip()}</div>
       <div class="live-stats">
-        <div><b>${n}/${tot}</b><small>EXERCISES</small></div>
+        <div><b>${n}/${tot}</b><small>MAIN LIFTS${extra>0?` · +${extra} BONUS`:''}</small></div>
         <div><b>${vol.toLocaleString()}</b><small>LB VOLUME</small></div>
       </div>
       <div class="session-progress"><span style="width:${Math.round(n/Math.max(1,tot)*100)}%"></span></div>
@@ -1376,12 +1380,12 @@ function sessBox(){
   const canReopen=last&&last.date===today()&&last.day===view;
   const cls=g.ok?'':'rest';
   const loweHtmlPre = profile.lowEnergy?`<button class="lowe ${preLowEnergy?'on':''}" id="lowEnergyBtn">LOW ENERGY DAY${preLowEnergy?' · ON':''}</button>`:'';
-  const count=sessionItems(view,preLowEnergy).length, mins=Math.ceil(count*8/5)*5, done=cycleDone().size;
+  const count=requiredItems(view).length, mins=Math.round(count*MIN_PER_LIFT/5)*5, done=cycleDone().size;
   return `<div class="today-card ${g.ok?'':'resting'}">
     <div class="eyebrow">${g.ok?'Today’s training':'Recovery day'}</div>
     <div class="today-title">${PLAN[view].name}</div>
     <div class="today-sub">${g.msg}${g.ok&&sug!==view?` Up next in the rotation: <b>${PLAN[sug].name}</b>.`:''}</div>
-    <div class="today-meta"><div class="today-stat"><b>${count}</b><small>EXERCISES</small></div>
+    <div class="today-meta"><div class="today-stat"><b>${count}</b><small>MAIN LIFTS</small></div>
       <div class="today-stat"><b>~${mins}</b><small>MINUTES</small></div><div class="today-stat"><b>${recentStreak()}</b><small>SESSION STREAK</small></div></div>
     <div class="weekgoal">${DAYS().map((_,i)=>`<span class="${i<done?'on':''}"></span>`).join('')}</div>
     <div class="weekgoal-label">${done} OF ${DAYS().length} WORKOUTS COMPLETE THIS ROTATION</div>
