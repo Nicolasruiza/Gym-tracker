@@ -389,10 +389,10 @@
     body.workout-live .wrap{padding:0 10px}.history-summary{gap:5px}.history-summary div{padding:11px 7px}.spark{width:48px}}
 
   /* ================= RECOMP WEEK ================= */
-  .rc-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin:4px 0 12px}
+  .rc-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:4px 0 12px}
   .rc-chip{min-height:58px;border:1px solid var(--rule);border-radius:10px;background:var(--card);color:var(--muted);cursor:pointer;
     font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.06em;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:4px 0}
-  .rc-chip b{font-family:"Barlow Condensed",sans-serif;font-size:15px;letter-spacing:.04em;color:var(--bone);font-weight:600}
+  .rc-chip b.sm{font-size:12.5px}.rc-chip b{font-family:"Barlow Condensed",sans-serif;font-size:15px;letter-spacing:.04em;color:var(--bone);font-weight:600}
   .rc-chip.today{box-shadow:inset 0 0 0 1.5px var(--accent)}
   .rc-chip.on{background:var(--accent);border-color:var(--accent);color:var(--accentText)}.rc-chip.on b{color:var(--accentText)}
   .rc-chip.done::after{content:"\2713";font-size:11px;color:var(--accent);line-height:1}.rc-chip.on.done::after{color:var(--accentText)}
@@ -1842,10 +1842,14 @@ document.getElementById('list').addEventListener('change',ev=>{
    (impact) work for bone. Strength sessions are still started and logged in the
    normal view; cardio and jumps are logged here into DB.cardio. Lift slots follow
    the rotation (whatever is next), so a missed day never desyncs the week. */
-const RC_WEEK={1:'lift',2:'z2',3:'lift',4:'vo2',5:'lift',6:'lift',0:'walk'};   // JS weekday -> slot
+const RC_GYM   ={1:'lift',2:'z2',    3:'lift',4:'vo2',   5:'lift',6:'lift',0:'walk'};   // JS weekday -> slot
+/* Office weeks: the commute walks on Tue/Thu are the easy cardio, so the 4x4 moves to Sunday. */
+const RC_OFFICE={1:'lift',2:'office',3:'lift',4:'office',5:'lift',6:'lift',0:'vo2'};
+const rcOfficeOn=()=>DB.rcOffice==null?profile.plan==='nr':!!DB.rcOffice;   // per profile; Nicolas defaults on
+const rcWeek=()=>rcOfficeOn()?RC_OFFICE:RC_GYM;
 const RC_ORDER=[1,2,3,4,5,6,0];
 const RC_ABBR={1:'MON',2:'TUE',3:'WED',4:'THU',5:'FRI',6:'SAT',0:'SUN'};
-const RC_SLOT={lift:'LIFT',z2:'Z2',vo2:'4×4',walk:'WALK'};
+const RC_SLOT={lift:'LIFT',z2:'Z2',vo2:'4×4',walk:'WALK',office:'OFFICE'};
 let rcSel=null, rcIntervals=null, timer=null, timerTick=null, wakeLock=null;
 
 const rcWeekday=ds=>new Date(ds+'T00:00:00').getDay();
@@ -1859,6 +1863,7 @@ const rcLifted=date=>DB.history.some(h=>h.date===date);
    Friday instead of Thursday still ticks the 4x4 slot. */
 function rcSlotDone(slot,date){
   if(slot==='lift')return rcLifted(date);
+  if(slot==='office')return rcLogged(date,'office');
   const type={z2:'z2',vo2:'4x4',walk:'walk'}[slot];
   return Object.values(rcWeekDates()).some(d=>rcLogged(d,type));
 }
@@ -1895,14 +1900,15 @@ const mmss=s=>`${Math.floor(s/60)}:${String(Math.max(0,Math.floor(s%60))).padSta
 
 function recompView(){
   const dates=rcWeekDates(), tWd=rcWeekday(today());
-  const sel=rcSel==null?tWd:rcSel, slot=RC_WEEK[sel], isToday=sel===tWd;
+  const RC_WEEK=rcWeek(), sel=rcSel==null?tWd:rcSel, slot=RC_WEEK[sel], isToday=sel===tWd;
   const strip=RC_ORDER.map(w=>{
     const st=RC_WEEK[w], cls=['rc-chip'];
     if(w===tWd)cls.push('today'); if(w===sel)cls.push('on'); if(rcSlotDone(st,dates[w]))cls.push('done');
-    return `<button class="${cls.join(' ')}" data-rcday="${w}" aria-label="${RC_ABBR[w]} ${RC_SLOT[st]}">${RC_ABBR[w]}<b>${RC_SLOT[st]}</b></button>`;
+    return `<button class="${cls.join(' ')}" data-rcday="${w}" aria-label="${RC_ABBR[w]} ${RC_SLOT[st]}">${RC_ABBR[w]}<b${RC_SLOT[st].length>4?' class="sm"':''}>${RC_SLOT[st]}</b></button>`;
   }).join('');
   const wk=Object.values(dates);
-  const sum=`<div class="rc-sum">THIS WEEK · ${wk.filter(rcLifted).length}/4 LIFT · ${wk.filter(d=>rcLogged(d,'z2')).length}/1 ZONE 2 · `
+  const sum=`<div class="rc-sum">THIS WEEK · ${wk.filter(rcLifted).length}/4 LIFT · `
+    +(rcOfficeOn()?`${wk.filter(d=>rcLogged(d,'office')).length}/2 OFFICE WALKS · `:`${wk.filter(d=>rcLogged(d,'z2')).length}/1 ZONE 2 · `)
     +`${wk.filter(d=>rcLogged(d,'4x4')).length}/1 4×4 · ${wk.filter(d=>rcLogged(d,'jumps')).length}/2 JUMPS</div>`;
   const when=isToday?'Today':RC_ABBR[sel].charAt(0)+RC_ABBR[sel].slice(1).toLowerCase();
   let body='';
@@ -1920,6 +1926,13 @@ function recompView(){
         ${jumpsDone?`<div class="rc-done">✓ JUMPS LOGGED TODAY</div>`:`<button class="rc-ghost" id="rcJumps">JUMPS DONE (~5 MIN)</button>`}`
       :`<p class="today-sub" style="margin-top:10px">Upper day: no jumps. Heavy presses and carries still load your bones.</p>`}
       <button class="big" id="rcOpen" style="margin-top:14px">OPEN ${PLAN[nd].name}</button></div>`;
+  } else if(slot==='office'){
+    const done=rcLogged(today(),'office');
+    body=`<div class="today-card"><div class="eyebrow">${when} · office day</div>
+      <div class="today-title">Office walking</div>
+      <div class="today-sub">Your walks to and from work are today's cardio. Aim for <b>10,000 steps</b>, at a pace where you could talk but not sing. No gym needed.</div>
+      ${done?`<div class="rc-done">✓ LOGGED TODAY</div>`:`<div class="rc-row"><label for="rcMin">STEPS</label><input id="rcMin" type="number" inputmode="numeric" value="10000" style="width:96px">
+      <button class="big" id="rcLogWalk" data-type="office" style="flex:1;padding:12px">LOG WALKING</button></div>`}</div>`;
   } else if(slot==='z2'||slot==='walk'){
     const done=rcLogged(today(),slot), z2=slot==='z2';
     body=`<div class="today-card"><div class="eyebrow">${when} · ${z2?'aerobic base':'recovery'}</div>
@@ -1943,7 +1956,8 @@ function recompView(){
       ${done?`<div class="rc-done">✓ 4×4 LOGGED TODAY</div>`:`<button class="big" id="rcStart">START TIMER</button>
       <button class="rc-ghost" id="rcLogVo2">LOG WITHOUT THE TIMER</button>`}</div>`;
   }
-  return `<div class="rc-strip">${strip}</div>${sum}${body}`;
+  const toggle=timer?'':`<button class="rc-ghost" id="rcOffice">OFFICE DAYS TUE/THU · ${rcOfficeOn()?'ON':'OFF'}</button>`;
+  return `<div class="rc-strip">${strip}</div>${sum}${body}${toggle}`;
 }
 
 /* ---------- 4x4 timer: runs on timestamps, so a locked phone does not drift ---------- */
@@ -2030,7 +2044,11 @@ function wireRecomp(){
   if(open)open.onclick=()=>{ viewMode='strength'; view=nextDay(); render(); window.scrollTo({top:0}); };
   const j=document.getElementById('rcJumps'); if(j)j.onclick=()=>{ rcLog('jumps'); toast('Jumps logged'); };
   const w=document.getElementById('rcLogWalk');
-  if(w)w.onclick=()=>{ const m=+document.getElementById('rcMin').value||0; rcLog(w.dataset.type,{min:m}); toast(`${w.dataset.type==='z2'?'Zone 2':'Walk'} logged · ${m} min`); };
+  if(w)w.onclick=()=>{ const m=+document.getElementById('rcMin').value||0, t=w.dataset.type;
+    if(t==='office'){ rcLog('office',{steps:m}); toast(`Office walking logged · ${m.toLocaleString()} steps`); return; }
+    rcLog(t,{min:m}); toast(`${t==='z2'?'Zone 2':'Walk'} logged · ${m} min`); };
+  const of=document.getElementById('rcOffice');
+  if(of)of.onclick=()=>{ DB.rcOffice=!rcOfficeOn(); save(); render(); };
   document.querySelectorAll('.rc-seg [data-n]').forEach(b=>b.onclick=()=>{ rcIntervals=+b.dataset.n; render(); });
   const st=document.getElementById('rcStart'); if(st)st.onclick=()=>startTimer(rcIntervals||rcDefaultIntervals());
   const lv=document.getElementById('rcLogVo2');
@@ -2049,7 +2067,7 @@ async function loadDBFor(id,planKey){
       return { next:p.next||{}, history:p.history||[], active:p.active||null,
                holds:p.holds||{}, cycleStarts:p.cycleStarts||[],
                focus:p.focus||null, injuries:p.injuries||[],
-               cycleAnchor:p.cycleAnchor||null, cardio:p.cardio||[], age:p.age||null };
+               cycleAnchor:p.cycleAnchor||null, cardio:p.cardio||[], age:p.age||null, rcOffice:p.rcOffice };
     }catch(e){}
   }
   return defaultDB(planKey);
@@ -2164,7 +2182,7 @@ document.getElementById('file').addEventListener('change',ev=>{
       DB.cycleStarts=p.cycleStarts||[];
       DB.focus=p.focus||null; DB.injuries=p.injuries||[];
       DB.cycleAnchor=p.cycleAnchor||null;
-      DB.cardio=p.cardio||[]; DB.age=p.age||null;
+      DB.cardio=p.cardio||[]; DB.age=p.age||null; DB.rcOffice=p.rcOffice;
       setActivePlan();
       save();render();toast(`Imported ${DB.history.length} session${DB.history.length===1?'':'s'}`);
     }catch(e){toast('That file is not a valid export')}

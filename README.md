@@ -12,7 +12,7 @@ No build step, no backend — the whole app is `index.html`.
 - Plate math for barbell lifts, dual-cable multipliers, bodyweight-strength badges
 - Injury holds freeze progression on specific lifts
 - History tab: weight progression per lift and a session log with total volume
-- Recomp week view: the 4 lifting days plus Zone 2, a weekly 4×4 VO2 session with a built-in interval timer, and jump (impact) work before leg days for bone density; heart-rate targets from age; cardio and jumps are logged per profile and included in export
+- Recomp week view: the 4 lifting days plus Zone 2 (or office walking days on Tue/Thu, with the 4×4 on Sunday; per-profile toggle), a weekly 4×4 VO2 session with a built-in interval timer, and jump (impact) work before leg days for bone density; heart-rate targets from age; cardio and jumps are logged per profile and included in export
 - Export / import your data as JSON
 
 ## Data
